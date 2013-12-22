@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Ligaments Test 1</title>
+	<style type="text/css">
+		body {font-family: sans-serif;}
+		.container {max-width:960px;margin:100px auto;}
+		fieldset {margin:20px 0;padding:20px;}
+		#dump {margin:20px;padding:20px;background-color:#eee;}
+	</style>
+	<script type="text/javascript" src="../lib/require.js"></script>
+	<script type="text/javascript">
+		require.config({
+			baseUrl: '../lib',
+			paths: {
+				backboneRelational: 'backbone-relational',
+				ligaments: '../ligaments'
+			},
+			shim: {
+				ligaments: {
+					deps: ['backbone']
+				},
+				'backbone-deepmodel': {
+					deps: ['backbone']
+				},
+				backbone: {
+					deps: ['jquery', 'underscore'],
+					exports: 'Backbone'
+				}
+			}
+		});
+
+		require(['backbone', 'ligaments', 'backbone-deepmodel'], function(Backbone) {
+			var ViewClass = Backbone.View.extend({
+				initialize: function(options) {
+					this.model = new ModelClass();
+					this.model.bindView(this);
+					var viewclass2 = Backbone.View.extend({});
+					this.model.bindView(new viewclass2({el: $('#dump').get(0)}), true);
+				},
+				beforeRender: function(changed) {
+					if (changed.first_name) {
+						changed.first_name = changed.first_name.toUpperCase();
+					}
+				}
+			});
+			var ModelClass = Backbone.Model.extend({
+				initialize: function(options) {
+
+				}
+			});
+
+			view = new ViewClass({el: $('form').get(0)});
+
+		});
+	</script>
+</head>
+<body>
+	<div class="container">
+		<h1>Form Test 1</h1>
+		<form class="" action="" method="POST">
+			<fieldset>
+				<legend>Simple Paths</legend>
+				<label>First Name:</label>
+				<input type="text" name="first_name">
+				<label>Last Name:</label>
+				<input type="text" name="last_name">
+			</fieldset>
+			<fieldset>
+				<legend>Complex Paths</legend>
+				<label>User 0 First Name:</label>
+				<input type="text" name="data[User][][first_name]">
+				<label>User 1 First Name:</label>
+				<input type="text" name="data[User][][first_name]">
+				<br>
+				<label>User 0 Group:</label>
+				<select name="data[User][][group_id]">
+					<option value="1">Admin</option>
+					<option value="2">User</option>
+				</select>
+				<label>User 1 Group:</label>
+				<select name="data[User][][group_id]">
+					<option value="1">Admin</option>
+					<option value="2">User</option>
+				</select>
+			</fieldset>
+			<button type="button" onclick="print()">Re Parse</button>
+		</form>
+		<pre id="dump">
+			First Name: <span name="first_name"></span>
+			<br>
+			Last Name: <span name="last_name"></span>
+			<br>
+			<br>
+			Name 0: <span name="data.User.0.first_name"></span>
+			<br>
+			Name 1: <span name="data.User.1.first_name"></span>
+			<br>
+			<br>
+			Group 0: <span name="data.User.0.group_id"></span>
+			<br>
+			Group 1: <span name="data.User.1.group_id"></span>
+		</pre>
+	</div>
+</body>
+</html>
