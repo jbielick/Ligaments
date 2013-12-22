@@ -297,37 +297,34 @@ _.extend(Backbone.Model.prototype, {
 		var _this = this;
 
 		this.views = this.views || [];
-		this.readOnly = readOnly || false;
 		this.views.push(view);
+		view.readOnly = readOnly;
 
 		view.listenTo(this, 'change', function() {
 			_this._inject.call(_this, view);
 		});
 
-		if (!this.readOnly) {
-			this.set(_._parseModel(view.$el));
+		if (!readOnly) {
+			this.parseModel(view);
 			view.events = _.extend((view.events || {}), {
 				'input *[name]': function(e) {
 					_this.target = e.target;
-					_this._set(e, this);
+					_this.parseModel(this);
 					delete _this.target;
 				},
 				'change *[name]': function(e) {
 					_this.target = e.target;
-					_this._set(e, this);
+					_this.parseModel(this);
 					delete _this.target;
 				}
 			});
 		}
-
 		return this;
 	},
-	_set: function(e, view) {
-		var tokens = _._tokenize(e.target.getAttribute('name')),
-			val = $(e.target).val();
-
-		this.set(_.extend(this.toJSON(), _._parseModel(view.$el)));
-		this.trigger('input', e, this);
+	parseModel: function(view) {
+		var newvalues = _._merge({}, this.toJSON(), _._parseModel(view.$el));
+		this.set(newvalues);
+		this.trigger('input', this);
 	},
 	_inject: function(view) {
 		if (this.lockBinding) {

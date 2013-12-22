@@ -17,6 +17,9 @@
 				ligaments: '../ligaments'
 			},
 			shim: {
+				underscore: {
+					exports: '_'
+				},
 				ligaments: {
 					deps: ['backbone']
 				},
@@ -30,28 +33,30 @@
 			}
 		});
 
-		require(['backbone', 'ligaments', 'backbone-deepmodel'], function(Backbone) {
-			var ViewClass = Backbone.View.extend({
-				initialize: function(options) {
-					this.model = new ModelClass();
-					this.model.bindView(this);
-					var viewclass2 = Backbone.View.extend({});
-					this.model.bindView(new viewclass2({el: $('#dump').get(0)}), true);
-				},
-				beforeRender: function(changed) {
-					if (changed.first_name) {
-						changed.first_name = changed.first_name.toUpperCase();
+		require(['jquery', 'backbone', 'ligaments', 'backbone-deepmodel'], function($, Backbone) {
+			$(document).ready(function() {
+				var ViewClass = Backbone.View.extend({
+					initialize: function(options) {
+						var viewclass2 = Backbone.View.extend({});
+						this.model = new ModelClass();
+						this.model.bindView(new viewclass2({el: $('#dump').get(0)}), true);
+						this.model.bindView(this);
+					},
+					beforeRender: function(changed) {
+						if (changed.first_name) {
+							changed.first_name = changed.first_name.toUpperCase();
+						}
 					}
-				}
+				});
+				var ModelClass = Backbone.DeepModel.extend({
+					initialize: function(options) {
+
+					}
+				});
+
+				view = new ViewClass({el: $('form').get(0)});
+
 			});
-			var ModelClass = Backbone.Model.extend({
-				initialize: function(options) {
-
-				}
-			});
-
-			view = new ViewClass({el: $('form').get(0)});
-
 		});
 	</script>
 </head>
