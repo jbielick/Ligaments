@@ -57,35 +57,49 @@
 </head>
 <body>
 	<div class="container">
-		<h1>Form Test 1</h1>
+		<h1>Two Way (and shared) Binding</h1>
 		<form class="" action="" method="POST">
+			<h3>View 1 - Model 1</h3>
 			<fieldset>
-				<legend>Simple Paths</legend>
+				<legend>Simple Paths:</legend>
 				<label>First Name:</label>
 				<input type="text" name="first_name">
 				<label>Last Name:</label>
 				<input type="text" name="last_name">
 			</fieldset>
 			<fieldset>
-				<legend>Complex Paths</legend>
-				<label>User 0 First Name:</label>
-				<input type="text" name="data[User][][first_name]">
-				<label>User 1 First Name:</label>
-				<input type="text" name="data[User][][first_name]">
-				<br>
-				<label>User 0 Group:</label>
-				<select name="data[User][][group_id]">
-					<option value="1">Admin</option>
-					<option value="2">User</option>
-				</select>
-				<label>User 1 Group:</label>
-				<select name="data[User][][group_id]">
-					<option value="1">Admin</option>
-					<option value="2">User</option>
-				</select>
+				<legend>Complex Paths:</legend>
+				<table>
+					<tr>
+						<td>
+							<label>User 0 First Name:</label>
+							<input type="text" name="data[User][][first_name]">
+						</td>
+						<td>
+							<label>User 0 Group:</label>
+							<select name="data[User][][group_id]">
+								<option value="1">Admin</option>
+								<option value="2">User</option>
+							</select>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<label>User 1 First Name:</label>
+							<input type="text" name="data[User][][first_name]">
+						</td>
+						<td>
+							<label>User 1 Group:</label>
+							<select name="data[User][][group_id]">
+								<option value="1">Admin</option>
+								<option value="2">User</option>
+							</select>
+						</td>
+					</tr>
+				</table>
 			</fieldset>
-			<button type="button" onclick="print()">Re Parse</button>
 		</form>
+		<h3>View 2 - Model 1 <small>(readOnly bind)</small></h3>
 		<pre id="dump">
 			First Name: <span name="first_name"></span>
 			<br>

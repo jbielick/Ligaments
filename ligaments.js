@@ -326,8 +326,8 @@ _.extend(Backbone.Model.prototype, {
 		var tokens = _._tokenize(e.target.getAttribute('name')),
 			val = $(e.target).val();
 
-		this.set(_.extend(view.model.toJSON(), _._parseModel(view.$el)));
-		this.trigger('input', e, view.model);
+		this.set(_.extend(this.toJSON(), _._parseModel(view.$el)));
+		this.trigger('input', e, this);
 	},
 	_inject: function(view) {
 		if (this.lockBinding) {
