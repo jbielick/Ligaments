@@ -2,16 +2,15 @@
  * Create needed mixin methods for Underscore
  */
 var Hash = new function(_) {
-
 	this.extract = function(data, path) {
 		if(!new RegExp('[{\[]').test(path)) {
 			return _._get(data, path) || [];
 		}
 		var tokens = _._tokenize(path),
-			got = [], 
-			out = [], 
+			got = [],
+			out = [],
 			context = {set: [data]};
-			
+
 		for (var i = 0; i < tokens.length; i++) {
 			got = []
 			for (var z = 0; z < context.set.length; z++) {
@@ -36,31 +35,38 @@ var Hash = new function(_) {
 			if (name) {
 				name = name.replace(/\[.{0}\]/g, function() {return '[' + $bound.filter('[name="' + name + '"]').index(_$this) + ']'});
 			}
-			flat[name] = _$this.val();
+			if ($(this).is(':checkbox')) {
+				flat[name] = _$this.prop('checked');
+			} else {
+				flat[name] = _$this.val();
+			}
 		});
-		return _._expand(flat);
+		return this._expand(flat);
 	},
 	this.matchToken = function(key, token) {
-		if (token === '{n}')
-			return (Number(key) % 1 === 0)
-		if (token === '{s}')
-			return typeof key === 'string'
-		if (Number(token) % 1 === 0)
-			return (key == token)
-		return (key === token)
-	},
-	this.expand = function(data) {
-		var path, tokens, parent, child, out = {}, cleanPath, val, curr;
-			
-		if(!data.length) {
-			data = [data];
+		if (token === '{n}') {
+			return (Number(key) % 1 === 0);
 		}
-		
-		for (var i = 0; i < data.length; i++) {
-			curr = data[i];
-			for (var path in curr) if (curr.hasOwnProperty(path)) {
+		if (token === '{s}') {
+			return typeof key === 'string';
+		}
+		if (Number(token) % 1 === 0) {
+			return (key == token);
+		}
+		return (key === token);
+	},
+	this.expand = function(flattened) {
+		var out = {}, path, tokens, parent, child, cleanPath, val, current;
+
+		if(flattened.constructor !== Array) {
+			flattened = [flattened];
+		}
+
+		for (var i = 0; i < flattened.length; i++) {
+			current = flattened[i];
+			for (var path in current) if (current.hasOwnProperty(path)) {
 				tokens = _._tokenize(path).reverse();
-				val = typeof curr[path] === 'function' ? curr[path]() : curr[path]
+				val = _.result(current, path);
 				if (tokens[0] === '{n}' || !isNaN(Number(tokens[0])) ) {
 					child = [];
 					child[tokens[0]] = val;
@@ -70,22 +76,22 @@ var Hash = new function(_) {
 				}
 				tokens.shift();
 				for (var z = 0; z < tokens.length; z++) {
-					if (tokens[z] === '{n}' || !isNaN(Number(tokens[z]))) {
-						parent = [], parent[tokens[z]] = child
+					if (!isNaN(Number(tokens[z]))) {
+						(parent = [])[parseInt(tokens[z], 10)] = child;
 					} else {
-						parent = {}, parent[tokens[z]] = child
+						(parent = {})[tokens[z]] = child;
 					}
 					child = parent;
 				}
-				out = _._merge(true, out, child);
+				this._merge(out, child);
 			}
 		}
 		return out;
 	},
 	this.get = function(data, path) {
 		var out = typeof data.toJSON === 'function' ? data.toJSON() : data,
-			tokens = _._tokenize(path);
-		
+			tokens = this._tokenize(path);
+
 		for (var i = 0; i < tokens.length; i++) {
 			if (typeof out === 'object') {
 				if (typeof out.get === 'function') {
@@ -104,98 +110,87 @@ var Hash = new function(_) {
 	this.insert = function(data, path, values, options) {
 		var tokens = _._tokenize(path), token, nextPath, expand = {}
 		if (path.indexOf('{') === -1 && path.indexOf('[]') === -1) {
-			return _._simpleOp('insert', data, tokens, values, options)
+			return this._simpleOp('insert', data, tokens, values, options);
 		}
 		if (_.keys(data).length) {
-			token = tokens.shift()
-			nextPath = tokens.join('.')
+			token = tokens.shift();
+			nextPath = tokens.join('.');
 			for (var key in data) if (data.hasOwnProperty(key)) {
 				if (_._matchToken(key, token)) {
 					if(!nextPath) {
-						data[key] = values
+						data[key] = values;
 					} else {
-						data[key] = _._insert(data[key], nextPath, values)
+						data[key] = this._insert(data[key], nextPath, values);
 					}
 				}
 			}
 		} else {
-			expand[path] = values
-			return _._expand([expand])
+			expand[path] = values;
+			return this._expand([expand]);
 		}
-		return data
+		return data;
 	},
 	this.remove = function(data, path) {
-		var tokens = _._tokenize(path), match, token, nextPath, removed
+		var tokens = this._tokenize(path),
+			match,
+			token,
+			nextPath,
+			removed;
+
 		if (path.indexOf('{') === -1) {
-			return _._simpleOp('remove', data, tokens)
+			return this.simpleOp('remove', data, tokens);
 		}
 		token = tokens.shift()
 		nextPath = tokens.join('.')
 		for (var key in data) if (data.hasOwnProperty(key)) {
-			match = _._matchToken(key, token)
+			match = this._matchToken(key, token);
 			if (match && typeof data[key] === 'object') {
-				data[key] = _.remove(data[key], nextPath)
+				data[key] = this._remove(data[key], nextPath);
 			} else if (match) {
 				if (Array.isArray(data)) {
-					data.splice(key,1)
+					data.splice(key,1);
 				} else {
-					delete data[key]
+					delete data[key];
 				}
 			}
 		}
-		return data
+		return data;
 	},
 	this.simpleOp = function(op, data, tokens, value, options) {
-		var hold = data, removed
+		var hold = data,
+			removed;
+
 		for (var i = 0; i < tokens.length; i++) {
 			if (op === 'insert') {
 				if (i === tokens.length-1) {
-					if (hold && typeof hold.set === 'function') {
-						hold.set(tokens[i], value, options);
-					} else if (hold) {
-						hold[tokens[i]] = value
+					if (hold) {
+						hold[tokens[i]] = value;
 					}
-					return data
+					return data;
 				}
-				if ((typeof hold[tokens[i]] !== 'object' && !hold.get && !hold.at)
-					|| (typeof hold.at === 'function' && typeof hold.at(tokens[i]) !== 'object')
-					|| (typeof hold.attributes && hold.get === 'function' && typeof hold.get(tokens[i]) !== 'object')) {
+				if (typeof hold[tokens[i]] !== 'object') {
 					if (!isNaN(Number(tokens[i+1]))) {
-						if (typeof hold.set === 'function') {
-							hold.set(tokens[i], [], options);
-						} else {
-							hold[tokens[i]] = [];
-						}
+						hold[tokens[i]] = [];
 					} else {
-						if (typeof hold.set === 'function') {
-							hold.set(tokens[i], {}, options);
-						} else {
-							hold[tokens[i]] = {};
-						}
+						hold[tokens[i]] = {};
 					}
 				}
-				if (typeof hold.at === 'function') {
-					hold = hold.at(Number(tokens[i]));
-				} else if (typeof hold.get === 'function') {
-					hold = hold.get(tokens[i]);
-				} else {
-					hold = hold[tokens[i]];
-				}
+				hold = hold[tokens[i]];
 			} else if (op === 'remove') {
 				if (i === tokens.length-1) {
-					removed = _._insert({}, 'item', hold[tokens[i]])
+					removed = _._insert({}, 'item', hold[tokens[i]]);
 					if (Array.isArray(hold)) {
-						hold.splice(tokens[i],1)
+						hold.splice(tokens[i],1);
 					} else {
-						delete hold[tokens[i]]
+						delete hold[tokens[i]];
 					}
-					data = removed.item
-					return data
+					data = removed.item;
+					return data;
 				}
 				if (typeof hold[tokens[i]] === 'undefined') {
-					return data
+					return data;
 				}
-				hold = hold[tokens[i]]
+				hold = hold[tokens[i]];
 			}
 		}
 	},
@@ -210,21 +205,21 @@ var Hash = new function(_) {
 		}
 	},
 	this.flatten = function(data, separator, depth) {
-		var path = '', 
-			stack = [], 
-			out = {}, 
-			data = _.extend({}, data), 
-			key, 
-			el, 
+		var path = '',
+			stack = [],
+			out = {},
+			data = _.extend({}, data),
+			key,
+			el,
 			curr,
-			separator = separator || '.', 
-			depth = depth || false, 
-			wrap = separator === ']['
+			separator = separator || '.',
+			depth = depth || false,
+			wrap = separator === '][';
 
 		while (_.keys(data).length || data.length) {
 			if (_.isArray(data)) {
-				key = data.length-1
-				el = data.pop()
+				key = data.length-1;
+				el = data.pop();
 			} else {
 				key = _.keys(data)[0];
 				el = data[key];
@@ -234,7 +229,7 @@ var Hash = new function(_) {
 				out[path + key] = el || '';
 			} else {
 				if (_.keys(data).length > 0) {
-					stack.push([data,path]);
+					stack.push([data, path]);
 				}
 				data = el;
 				path += key + separator;
@@ -245,24 +240,26 @@ var Hash = new function(_) {
 				path = curr[1];
 			}
 		}
-		return out
+		return out;
 	},
 	this.merge = function() {
-		var obs = Array.prototype.slice.call(arguments), out, dest = false
-		
-		if (typeof arguments[0] === 'boolean')
-			dest = obs.shift()
-			
-		out = obs.shift()
-		for (var i = 0; i < obs.length; i++) {
-			for (var key in obs[i]) if (obs[i].hasOwnProperty(key)) {
-				if (typeof obs[i][key] === 'object' && out[key] && !obs[i][key].nodeType)
-					out[key] = _._merge(dest, out[key], obs[i][key])
-				else
-					out[key] = obs[i][key]
-			}
+		var _this = this,
+			objects = Array.prototype.slice.call(arguments),
+			out = objects.shift(),
+			bucket,
+			current;
+
+		for (var i = 0; i < objects.length; i++) {
+			current = objects[i];
+			_.each(_.keys(current), function(key) {
+				if (out[key] && current[key] && _.isObject(out[key]) && _.isObject(current[key])) {
+					out[key] = _this._merge(out[key], current[key]);
+				} else {
+					out[key] = current[key];
+				}
+			});
 		}
-		return out
+		return out;
 	},
 	this.dotToBracketNotation = function(path, reverse) {
 		if (!path) {
@@ -292,57 +289,71 @@ _.mixin({
 	_dotToBracketNotation: Hash.dotToBracketNotation
 });
 
-_.extend(Backbone.Model.prototype, {
-	bindView: function(view, readOnly) {
-		var _this = this;
+;(function(factory) {
+    if (typeof define === 'function' && define.amd) {
+        define(['underscore', 'backbone'], factory);
+    } else {
+        factory(_, Backbone);
+    }
+}(function(_, Backbone) {
+	_.extend(Backbone.Model.prototype, {
+		bindView: function(view, readOnly) {
+			var _this = this;
 
-		this.views = this.views || [];
-		this.views.push(view);
-		view.readOnly = readOnly;
+			this.views = this.views || [];
+			this.views.push(view);
+			view.readOnly = readOnly;
 
-		view.listenTo(this, 'change', function() {
-			_this._inject.call(_this, view);
-		});
-
-		if (!readOnly) {
-			this.parseModel(view);
-			view.events = _.extend((view.events || {}), {
-				'input *[name]': function(e) {
-					_this.target = e.target;
-					_this.parseModel(this);
-					delete _this.target;
-				},
-				'change *[name]': function(e) {
-					_this.target = e.target;
-					_this.parseModel(this);
-					delete _this.target;
-				}
+			view.listenTo(this, 'change', function() {
+				_this._inject.call(_this, view);
 			});
-		}
-		return this;
-	},
-	parseModel: function(view) {
-		var newvalues = _._merge({}, this.toJSON(), _._parseModel(view.$el));
-		this.set(newvalues);
-		this.trigger('input', this);
-	},
-	_inject: function(view) {
-		if (this.lockBinding) {
+
+			if (!readOnly) {
+				this.parseModel(view);
+				view.events = _.extend((view.events || {}), {
+					'input *[name]': function(e) {
+						_this.target = e.target;
+						_this.parseModel(this);
+						delete _this.target;
+					},
+					'change *[name]': function(e) {
+						_this.target = e.target;
+						_this.parseModel(this);
+						delete _this.target;
+					}
+				});
+			}
 			return this;
-		}
-		var _this = this,
-			changed = _._flatten(view.beforeRender ? (view.beforeRender(this.changed) || this.changed) : this.changed);
-		_.each(changed, function(v, k) {
-			_.each(_this.views, function(view) {
-				var $bound = view.$('[name="'+k+'"], [name="'+_._dotToBracketNotation(k)+'"]').not(_this.target);
-				if ($bound.is(':input')) {
-					$bound.val(v);
-				} else if ($bound.is('img')) {
-					$bound.attr('src', v);
-				} else {
-					$bound.html(v);
-				}
+		},
+		parseModel: function(view) {
+			var newvalues = _._merge({}, this.toJSON(), _._parseModel(view.$el));
+			this.set(newvalues);
+			this.trigger('input', this);
+		},
+		_inject: function(view) {
+			if (this.lockBinding) {
+				return this;
+			}
+			var _this = this,
+				changed = _._flatten(view.beforeRender ? (view.beforeRender(this.changed) || this.changed) : this.changed);
+			_.each(changed, function(v, k) {
+				_.each(_this.views, function(view) {
+					var nameAttr = _._dotToBracketNotation(k);
+					var nameSelector = nameAttr.replace(/(.*\[)([0-9]+)(\].*)/g, '[name="$1$3"]:eq($2)');
+					var $bound = view.$('[name="'+k+'"], '+nameSelector+'').not(_this.target);
+					if ($bound.is(':input')) {
+						if ($bound.is('[type="checkbox"]')) {
+							$bound.prop('checked', !!v);
+						} else {
+							$bound.val(v);
+						}
+					} else if ($bound.is('img')) {
+						$bound.attr('src', v);
+					} else {
+						$bound.html(v);
+					}
+				});
 			});
-		});
-	}
-})
+		}
+	});
+}));
