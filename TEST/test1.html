@@ -37,10 +37,14 @@
 			$(document).ready(function() {
 				var ViewClass = Backbone.View.extend({
 					initialize: function(options) {
-						var viewclass2 = Backbone.View.extend({});
+						var ReadOnlyViewClass = Backbone.View.extend({});
 						this.model = new ModelClass();
-						this.model.bindView(new viewclass2({el: $('#dump').get(0)}), true);
-						this.model.bindView(this);
+						window.lig = new Backbone.Ligaments({model: this.model, view: this});
+						window.lig2 = new Backbone.Ligaments({
+							model: this.model,
+							view: new ReadOnlyViewClass({el: $('#dump').get(0)}),
+							readOnly: true
+						});
 					},
 					beforeRender: function(changed) {
 						if (changed.first_name) {
@@ -49,9 +53,7 @@
 					}
 				});
 				var ModelClass = Backbone.DeepModel.extend({
-					initialize: function(options) {
-
-					}
+					initialize: function(options) {}
 				});
 
 				view = new ViewClass({el: $('form').get(0)});
@@ -109,24 +111,38 @@
 							<input type="checkbox" name="data[User][][active]" value="1">
 						</td>
 					</tr>
+					<tr>
+						<td colspan="2">
+							<label>Image</label>
+							<input type="text" name="data[User][][img]">
+						</td>
+					</tr>
 				</table>
 			</fieldset>
 		</form>
 		<h3>View 2 - Model 1 <small>(readOnly bind)</small></h3>
 		<pre id="dump">
-			First Name: <span name="first_name"></span>
+			first_name: <span name="first_name"></span>
 			<br>
-			Last Name: <span name="last_name"></span>
-			<br>
-			<br>
-			Name 0: <span name="data.User.0.first_name"></span>
-			<br>
-			Name 1: <span name="data.User.1.first_name"></span>
+			last_name: <span name="last_name"></span>
 			<br>
 			<br>
-			Group 0: <span name="data.User.0.group_id"></span>
+			data.User.0.first_name: <input type="text" readonly name="data.User.0.first_name">
 			<br>
-			Group 1: <span name="data.User.1.group_id"></span>
+			data.User.1.first_name: <input type="text" readonly name="data.User.1.first_name">
+			<br>
+			<br>
+			data.User.0.group_id: <span name="data.User.0.group_id"></span>
+			<br>
+			data.User.1.group_id: <span name="data.User.1.group_id"></span>
+			<br>
+			<br>
+			data.User.0.active: <span name="data.User.0.active"></span>
+			<br>
+			data.User.1.active: <input type="checkbox" name="data.User.1.active">
+			<br>
+			<br>
+			data.User.0.img: <img src="" name="data.User.0.img">
 		</pre>
 	</div>
 </body>

@@ -296,63 +296,74 @@ _.mixin({
         factory(_, Backbone);
     }
 }(function(_, Backbone) {
-	_.extend(Backbone.Model.prototype, {
-		bindView: function(view, readOnly) {
-			var _this = this;
 
-			this.views = this.views || [];
-			this.views.push(view);
-			view.readOnly = readOnly;
+	var Ligaments = Backbone.Ligaments = function(options) {
+		this.cid = _.uniqueId('ligament');
+		options || (options = {});
+		this.ensureArguments.call(this, options);
+		_.extend(this, _.pick(options, ligamentOptions));
+		this.createBindings();
+		if (!options.readOnly) {
+			this.model.set(this.parseModel(this.view.$el));
+		}
+	};
 
-			view.listenTo(this, 'change', function() {
-				_this._inject.call(_this, view);
-			});
+	var ligamentOptions	 = ['readOnly', 'view', 'model', 'bindings'];
 
-			if (!readOnly) {
-				this.parseModel(view);
-				view.events = _.extend((view.events || {}), {
-					'input *[name]': function(e) {
-						_this.target = e.target;
-						_this.parseModel(this);
-						delete _this.target;
-					},
-					'change *[name]': function(e) {
-						_this.target = e.target;
-						_this.parseModel(this);
-						delete _this.target;
-					}
+	_.extend(Ligaments.prototype, {
+		createBindings: function() {
+			var pull = _.bind(this.pull, this);
+			var inject = _.bind(this.inject, this);
+
+			this.view.listenTo(this.model, 'change', inject);
+			if (!this.readOnly) {
+				_.extend((this.view.events || (this.view.events = {})), {
+					'change *[name]'	: pull,
+					'input *[name]'		: pull
 				});
+				this.view.delegateEvents();
 			}
-			return this;
 		},
-		parseModel: function(view) {
-			var newvalues = _._merge({}, this.toJSON(), _._parseModel(view.$el));
-			this.set(newvalues);
-			this.trigger('input', this);
+		ensureArguments: function(options) {
+			if (!options.view || !options.model) {
+				throw new Error('You must provide an instance of a Backbone view and model');
+			}
 		},
-		_inject: function(view) {
-			if (this.lockBinding) {
+		pull: function(e) {
+			// we save a reference to the input target so that when a model
+			// change event fires, we don't inject data into the same target
+			if (!this.readOnly) {
+				this.target = e.target;
+				this.model.set(this.parseModel(this.view.$el));
+				delete this.target;
+			}
+		},
+		parseModel: _._parseModel.bind(_),
+		inject: function(model, options) {
+			var view = this.view;
+			if (this.view.lockBinding) {
 				return this;
 			}
 			var _this = this,
-				changed = _._flatten(view.beforeRender ? (view.beforeRender(this.changed) || this.changed) : this.changed);
+				view = this.view,
+				changed = model.changedAttributes(),
+				changed = _._flatten(view.beforeRender ? (view.beforeRender(changed) || changed) : changed);
+
 			_.each(changed, function(v, k) {
-				_.each(_this.views, function(view) {
-					var nameAttr = _._dotToBracketNotation(k);
-					var nameSelector = nameAttr.replace(/(.*\[)([0-9]+)(\].*)/g, '[name="$1$3"]:eq($2)');
-					var $bound = view.$('[name="'+k+'"], '+nameSelector+'').not(_this.target);
-					if ($bound.is(':input')) {
-						if ($bound.is('[type="checkbox"]')) {
-							$bound.prop('checked', !!v);
-						} else {
-							$bound.val(v);
-						}
-					} else if ($bound.is('img')) {
-						$bound.attr('src', v);
+				var nameAttr = _._dotToBracketNotation(k);
+				var nameSelector = nameAttr.replace(/(.*\[)([0-9]+)(\].*)/g, '[name="$1$3"]:eq($2)');
+				var $bound = view.$('[name="'+k+'"], '+nameSelector+'').not(_this.target);
+				if ($bound.is(':input')) {
+					if ($bound.is('[type="checkbox"]')) {
+						$bound.prop('checked', !!v);
 					} else {
-						$bound.html(v);
+						$bound.val(v);
 					}
-				});
+				} else if ($bound.is('img')) {
+					$bound.attr('src', v);
+				} else {
+					$bound.html(v);
+				}
 			});
 		}
 	});
