@@ -303,12 +303,12 @@ _.mixin({
 		this.ensureArguments.call(this, options);
 		_.extend(this, _.pick(options, ligamentOptions));
 		this.createBindings();
-		if (!options.readOnly) {
+		if (!this.readOnly) {
 			this.model.set(this.parseModel(this.view.$el));
 		}
 	};
 
-	var ligamentOptions	 = ['readOnly', 'view', 'model', 'bindings'];
+	var ligamentOptions	 = ['readOnly', 'view', 'model', 'bindings', 'binds'];
 
 	_.extend(Ligaments.prototype, {
 		createBindings: function() {
@@ -340,29 +340,37 @@ _.mixin({
 		},
 		parseModel: _._parseModel.bind(_),
 		inject: function(model, options) {
-			var view = this.view;
-			if (this.view.lockBinding) {
-				return this;
-			}
 			var _this = this,
 				view = this.view,
-				changed = model.changedAttributes(),
-				changed = _._flatten(view.beforeRender ? (view.beforeRender(changed) || changed) : changed);
+				changed = model.changedAttributes();
 
-			_.each(changed, function(v, k) {
-				var nameAttr = _._dotToBracketNotation(k);
-				var nameSelector = nameAttr.replace(/(.*\[)([0-9]+)(\].*)/g, '[name="$1$3"]:eq($2)');
-				var $bound = view.$('[name="'+k+'"], '+nameSelector+'').not(_this.target);
-				if ($bound.is(':input')) {
-					if ($bound.is('[type="checkbox"]')) {
-						$bound.prop('checked', !!v);
+			if (view.lockBinding) {
+				return this;
+			}
+
+			if (_.isFunction(view.beforeRender)) {
+				view.beforeRender(changed);
+			}
+
+			changed = _._flatten(changed);
+
+			_.each(changed, function(value, path) {
+				if (!_this.binds || _.indexOf(_this.binds, path) > -1) {
+					var nameAttr = _._dotToBracketNotation(path),
+						nameSelector = nameAttr.replace(/(.*\[)([0-9]+)(\].*)/g, '[name="$1$3"]:eq($2)'),
+						$bound = view.$('[name="'+path+'"], '+nameSelector+'').not(_this.target);
+
+					if ($bound.is(':input')) {
+						if ($bound.is('[type="checkbox"]')) {
+							$bound.prop('checked', !!value).trigger('change');
+						} else {
+							$bound.val(value).trigger('change');
+						}
+					} else if ($bound.is('img')) {
+						$bound.attr('src', value);
 					} else {
-						$bound.val(v);
+						$bound.html(value.toString());
 					}
-				} else if ($bound.is('img')) {
-					$bound.attr('src', v);
-				} else {
-					$bound.html(v);
 				}
 			});
 		}

@@ -33,30 +33,37 @@
 			}
 		});
 
-		require(['jquery', 'backbone', 'ligaments', 'backbone-deepmodel'], function($, Backbone) {
+		require(['backbone', 'ligaments', 'backbone-deepmodel'], function(Backbone) {
 			$(document).ready(function() {
-				var ViewClass = Backbone.View.extend({
-					initialize: function(options) {
-						var ReadOnlyViewClass = Backbone.View.extend({});
-						this.model = new ModelClass();
-						window.lig = new Backbone.Ligaments({model: this.model, view: this});
-						window.lig2 = new Backbone.Ligaments({
-							model: this.model,
-							view: new ReadOnlyViewClass({el: $('#dump').get(0)}),
-							readOnly: true
-						});
-					},
+
+				var ReadOnlyViewClass = Backbone.View.extend({
 					beforeRender: function(changed) {
 						if (changed.first_name) {
 							changed.first_name = changed.first_name.toUpperCase();
 						}
 					}
 				});
-				var ModelClass = Backbone.DeepModel.extend({
-					initialize: function(options) {}
-				});
 
-				view = new ViewClass({el: $('form').get(0)});
+				var ViewClass = Backbone.View.extend();
+
+				var ModelClass = Backbone.DeepModel.extend();
+
+				var model = new ModelClass({first_name: 'Josh'});
+
+				var readOnlyView = new ReadOnlyViewClass({el: $('#dump').get(0)});
+
+				var inputView = new ViewClass({el: $('form').get(0)});
+
+				new Backbone.Ligaments({model: model, view: inputView});
+				new Backbone.Ligaments({
+					model: model,
+					view: readOnlyView,
+					readOnly: true
+				});
+				new Backbone.Ligaments({
+					model: (window.model = new (Backbone.DeepModel.extend())),
+					view: readOnlyView
+				});
 
 			});
 		});
@@ -127,9 +134,9 @@
 			last_name: <span name="last_name"></span>
 			<br>
 			<br>
-			data.User.0.first_name: <input type="text" readonly name="data.User.0.first_name">
+			data.User.0.first_name: <input type="text" name="data.User.0.first_name">
 			<br>
-			data.User.1.first_name: <input type="text" readonly name="data.User.1.first_name">
+			data.User.1.first_name: <input type="text" name="data.User.1.first_name">
 			<br>
 			<br>
 			data.User.0.group_id: <span name="data.User.0.group_id"></span>
