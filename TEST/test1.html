@@ -6,7 +6,7 @@
 		body {font-family: sans-serif;}
 		.container {max-width:960px;margin:100px auto;}
 		fieldset {margin:20px 0;padding:20px;}
-		#dump {margin:20px;padding:20px;background-color:#eee;}
+		pre {margin:20px;padding:20px;background-color:#eee;}
 	</style>
 	<script type="text/javascript" src="../lib/require.js"></script>
 	<script type="text/javascript">
@@ -37,9 +37,12 @@
 			$(document).ready(function() {
 
 				var ReadOnlyViewClass = Backbone.View.extend({
-					beforeRender: function(model, changed) {;
-						if (_.has(changed, 'data.User.0.first_name')) {
-							 changed['data.User.0.first_name'] = changed['data.User.0.first_name'].toUpperCase();
+					beforeInject: function(model, changed) {;
+						if (_.has(changed, 'data.User.0.name')) {
+							 changed['data.User.0.name'] = changed['data.User.0.name'].toUpperCase();
+						}
+						if (_.has(changed, 'data.User.1.name')) {
+							changed['data.User.1.name'] = changed['data.User.1.name'].split('').reverse().join('');
 						}
 					}
 				});
@@ -48,10 +51,10 @@
 
 				var ModelClass = Backbone.DeepModel.extend();
 
-				model = new ModelClass({data: {User: [null, {first_name: 'Birds'}]}});
+				model = new ModelClass({data: {User: [{name: 'Larry Bird'}]}});
 
 				model.on('change', function(model) {
-					$('#attr').html(JSON.stringify(model.toJSON(), null, '    '));
+					$('#attr').html(JSON.stringify(model.toJSON(), null, '  '));
 				});
 
 				var readOnlyView = new ReadOnlyViewClass({el: $('#dump').get(0)});
@@ -84,8 +87,8 @@
 				<table>
 					<tr>
 						<td>
-							<label>User 0 First Name:</label>
-							<input type="text" name="data[User][][first_name]" value="Josh">
+							<label>User 0 Name:</label>
+							<input type="text" name="data[User][][name]" value="Josh">
 						</td>
 						<td>
 							<label>User 0 Group:</label>
@@ -95,8 +98,8 @@
 							</select>
 						</td>
 						<td>
-							<label>Active</label>
-							<input type="checkbox" name="data[User][][active]" value="1" checked>
+							<label>Tall</label>
+							<input type="checkbox" name="data[User][][tall]" value="1" checked>
 						</td>
 						<td>
 							<label>Image SRC</label>
@@ -105,8 +108,8 @@
 					</tr>
 					<tr>
 						<td>
-							<label>User 1 First Name:</label>
-							<input type="text" name="data[User][][first_name]">
+							<label>User 1 Name:</label>
+							<input type="text" name="data[User][][name]">
 						</td>
 						<td>
 							<label>User 1 Group:</label>
@@ -116,8 +119,8 @@
 							</select>
 						</td>
 						<td>
-							<label>Active</label>
-							<input type="checkbox" name="data[User][][active]" value="1">
+							<label>Tall</label>
+							<input type="checkbox" name="data[User][][tall]" value="1">
 						</td>
 						<td>
 							<label>Image SRC</label>
@@ -134,9 +137,9 @@
 		</h3>
 		<pre id="dump">
 			<br>
-			data.User.0.first_name: <input type="text" name="data.User.0.first_name">
+			data.User.0.name: <input type="text" name="data.User.0.name">
 			<br>
-			data.User.1.first_name: <input type="text" name="data.User.1.first_name">
+			data.User.1.name: <input type="text" name="data.User.1.name">
 			<br>
 			<br>
 			data.User.0.group_id: <span name="data.User.0.group_id"></span>
@@ -144,12 +147,14 @@
 			data.User.1.group_id: <span name="data.User.1.group_id"></span>
 			<br>
 			<br>
-			data.User.0.active: <span name="data.User.0.active"></span>
+			data.User.0.tall: <span name="data.User.0.tall"></span>
 			<br>
-			data.User.1.active: <input type="checkbox" name="data.User.1.active">
+			data.User.1.tall: <input type="checkbox" name="data.User.1.tall">
 			<br>
 			<br>
 			data.User.0.img: <img src="" name="data.User.0.img">
+			<br>
+			data.User.1.img: <img src="" name="data.User.1.img">
 		</pre>
 		<h1>Model Attributes</h1>
 		<pre id="attr">

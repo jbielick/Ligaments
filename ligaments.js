@@ -1,5 +1,9 @@
 /**
- * Create needed mixin methods for Underscore
+ * ligaments.js
+ * 
+ * Licensed under GNU GENERAL PUBLIC LICENSE
+ *
+ * Author: Josh Bielick (http://github.com/jbielick)
  */
 var Hash = new function(_) {
 	this.extract = function(data, path) {
@@ -35,10 +39,10 @@ var Hash = new function(_) {
 			if (name) {
 				name = name.replace(/\[.{0}\]/g, function() {return '[' + $bound.filter('[name="' + name + '"]').index(_$this) + ']'});
 			}
-			if ($(this).is(':checkbox')) {
-				flat[name] = _$this.prop('checked');
-			} else {
+			if (_$this.is(':input') && (!_$this.is(':checkbox') || _$this.prop('checked'))) {
 				flat[name] = _$this.val();
+			} else {
+				flat[name] = _$this.text();
 			}
 		});
 		return this._expand(flat);
@@ -347,9 +351,8 @@ _.mixin({
 					key = key.replace(/\[\]/g, function() {return '[' + _this.view.$('[name]').filter('[name="' + key + '"]').index($input) + ']'});
 					key = _._dotToBracketNotation(key, true);
 				}
-				if ($input.is(':checkbox')) {
-					value = $input.prop('checked');
-				} else {
+
+				if (!$input.is(':checkbox') || $input.prop('checked')) {
 					value = $input.val();
 				}
 
@@ -370,8 +373,8 @@ _.mixin({
 				return this;
 			}
 
-			if (_.isFunction(view.beforeRender)) {
-				view.beforeRender(model, changed);
+			if (_.isFunction(view.beforeInject)) {
+				view.beforeInject(model, changed);
 			}
 
 			changed = _._flatten(changed);
@@ -379,8 +382,8 @@ _.mixin({
 			_.each(changed, function(value, path) {
 				if (!_this.binds || _.indexOf(_this.binds, path) > -1) {
 					var nameAttr = _._dotToBracketNotation(path),
-						nameSelector = nameAttr.replace(/(.*\[)([0-9]+)(\].*)/g, '[name="$1$3"]:eq($2)'),
-						$bound = view.$('[name="'+path+'"], '+nameSelector+'').not(_this.target);
+						nameSelector = nameAttr.replace(/(.*\[)([0-9]+)?(\].*)/g, '[name="$1$3"]:eq($2)'),
+						$bound = view.$('[name="'+path+'"], '+nameSelector+', [name="'+nameAttr+'"]').not(_this.target);
 
 					if ($bound.is(':input')) {
 						if ($bound.is(':checkbox')) {
@@ -388,7 +391,7 @@ _.mixin({
 						} else {
 							$bound.val(value).trigger('change');
 						}
-					} else if ($bound.is('img')) {
+					} else if ($bound.is('img, svg')) {
 						$bound.attr('src', value);
 					} else {
 						$bound.html(value.toString());
