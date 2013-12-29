@@ -5,7 +5,7 @@ Declarative data binding between Backbone Models and Views.
 
 Currently in development.
 
-####How to use
+###HAbout
 
 Include the ligaments.js file in your application after backbone.js and before any of your views or models are loaded or required.
 
@@ -14,7 +14,7 @@ ligaments.js binds DOM Elements to Model Attributes on the `name` attributes of 
 
 To create data binding between a view and a model, construct a new Ligaments instance by calling `Backbone.Ligaments(options)` method and pass it a object containing your view, model and other options. Currently, there is no way to ~~divorce~~ unbind the view from the model.
 
-####Usage:
+###Usage:
 
 ```js
 	var ViewClass = Backbone.View.extend({el: '.MyView'});
@@ -25,7 +25,7 @@ To create data binding between a view and a model, construct a new Ligaments ins
 All input changes in the view will then be ingested by the model and set to its attributes. Since `{readOnly: true}` wasn't set in the options, Ligaments will default to two-way binding&mdash;that is, any attributes set on the model programmatically will be injected into the view.
 
 
-Example:
+####Example:
 
 ```js
 	var ViewClass = Backbone.View.extend({el: '.MyElement'});
@@ -35,7 +35,7 @@ Example:
 	new Backbone.Ligaments({model: new ModelClass(), view: new ViewClass()});
 ```
 
-##Featres
+##Features
 ====================
 
 ###beforeInject callback
@@ -76,4 +76,4 @@ By default, Backbone.Ligaments will bind all attributes. If you'd like for Backb
 
 ###Compatibility
 
-Backbone.Ligaments has been tested and works with Backbone.DeepModel
+`Backbone.Ligaments` has been tested and works with `Backbone.DeepModel`
