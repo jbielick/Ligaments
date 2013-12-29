@@ -37,9 +37,9 @@
 			$(document).ready(function() {
 
 				var ReadOnlyViewClass = Backbone.View.extend({
-					beforeRender: function(changed) {
-						if (changed.first_name) {
-							changed.first_name = changed.first_name.toUpperCase();
+					beforeRender: function(model, changed) {;
+						if (_.has(changed, 'data.User.0.first_name')) {
+							 changed['data.User.0.first_name'] = changed['data.User.0.first_name'].toUpperCase();
 						}
 					}
 				});
@@ -48,22 +48,24 @@
 
 				var ModelClass = Backbone.DeepModel.extend();
 
-				var model = new ModelClass({first_name: 'Josh'});
+				model = new ModelClass({data: {User: [null, {first_name: 'Birds'}]}});
+
+				model.on('change', function(model) {
+					$('#attr').html(JSON.stringify(model.toJSON(), null, '    '));
+				});
 
 				var readOnlyView = new ReadOnlyViewClass({el: $('#dump').get(0)});
 
 				var inputView = new ViewClass({el: $('form').get(0)});
 
-				new Backbone.Ligaments({model: model, view: inputView});
 				new Backbone.Ligaments({
 					model: model,
 					view: readOnlyView,
 					readOnly: true
 				});
-				new Backbone.Ligaments({
-					model: (window.model = new (Backbone.DeepModel.extend())),
-					view: readOnlyView
-				});
+
+				new Backbone.Ligaments({model: model, view: inputView});
+
 
 			});
 		});
@@ -71,23 +73,19 @@
 </head>
 <body>
 	<div class="container">
-		<h1>Two Way (and shared) Binding</h1>
-		<form class="" action="" method="POST">
-			<h3>View 1 - Model 1</h3>
-			<fieldset>
-				<legend>Simple Paths:</legend>
-				<label>First Name:</label>
-				<input type="text" name="first_name">
-				<label>Last Name:</label>
-				<input type="text" name="last_name">
-			</fieldset>
+		<h1>
+			Model &lt;-&gt; View Binding
+			<br>
+			<small>View 1 - Model 1 (two-way)</small>
+		</h1>
+		<form>
 			<fieldset>
 				<legend>Complex Paths:</legend>
 				<table>
 					<tr>
 						<td>
 							<label>User 0 First Name:</label>
-							<input type="text" name="data[User][][first_name]">
+							<input type="text" name="data[User][][first_name]" value="Josh">
 						</td>
 						<td>
 							<label>User 0 Group:</label>
@@ -98,7 +96,11 @@
 						</td>
 						<td>
 							<label>Active</label>
-							<input type="checkbox" name="data[User][][active]" value="1">
+							<input type="checkbox" name="data[User][][active]" value="1" checked>
+						</td>
+						<td>
+							<label>Image SRC</label>
+							<input type="text" name="data[User][][img]">
 						</td>
 					</tr>
 					<tr>
@@ -117,22 +119,20 @@
 							<label>Active</label>
 							<input type="checkbox" name="data[User][][active]" value="1">
 						</td>
-					</tr>
-					<tr>
-						<td colspan="2">
-							<label>Image</label>
+						<td>
+							<label>Image SRC</label>
 							<input type="text" name="data[User][][img]">
 						</td>
 					</tr>
 				</table>
 			</fieldset>
 		</form>
-		<h3>View 2 - Model 1 <small>(readOnly bind)</small></h3>
+		<h1>
+			Model -&gt; View Binding
+			<br>
+			<small>View 2 - Model 1 (<code>readOnly</code>)</small>
+		</h3>
 		<pre id="dump">
-			first_name: <span name="first_name"></span>
-			<br>
-			last_name: <span name="last_name"></span>
-			<br>
 			<br>
 			data.User.0.first_name: <input type="text" name="data.User.0.first_name">
 			<br>
@@ -150,6 +150,10 @@
 			<br>
 			<br>
 			data.User.0.img: <img src="" name="data.User.0.img">
+		</pre>
+		<h1>Model Attributes</h1>
+		<pre id="attr">
+
 		</pre>
 	</div>
 </body>

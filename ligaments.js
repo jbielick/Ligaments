@@ -266,7 +266,7 @@ var Hash = new function(_) {
 			throw new TypeError('Not enough arguments');
 		}
 		if (reverse) {
-			return path.replace(/\[(\w+)\]/g, '.$1');
+			return path.replace(/\]/g, '').split('[').join('.');
 		} else {
 			return path.replace(/([\w]+)\.?/g, '[$1]').replace(/^\[(\w+)\]/, '$1');
 		}
@@ -302,24 +302,26 @@ _.mixin({
 		options || (options = {});
 		this.ensureArguments.call(this, options);
 		_.extend(this, _.pick(options, ligamentOptions));
+		this.bootstrap();
 		this.createBindings();
 		if (!this.readOnly) {
-			this.model.set(this.parseModel(this.view.$el));
+			this.model.set(_._parseModel(this.view.$el));
 		}
+		this.model.trigger('change', this.model, _._flatten(this.model.toJSON()));
 	};
 
 	var ligamentOptions	 = ['readOnly', 'view', 'model', 'bindings', 'binds'];
 
 	_.extend(Ligaments.prototype, {
 		createBindings: function() {
-			var pull = _.bind(this.pull, this);
+			var ingest = _.bind(this.ingest, this);
 			var inject = _.bind(this.inject, this);
 
 			this.view.listenTo(this.model, 'change', inject);
 			if (!this.readOnly) {
 				_.extend((this.view.events || (this.view.events = {})), {
-					'change *[name]'	: pull,
-					'input *[name]'		: pull
+					'change *[name]'	: ingest,
+					'input *[name]'		: ingest
 				});
 				this.view.delegateEvents();
 			}
@@ -329,27 +331,47 @@ _.mixin({
 				throw new Error('You must provide an instance of a Backbone view and model');
 			}
 		},
-		pull: function(e) {
-			// we save a reference to the input target so that when a model
-			// change event fires, we don't inject data into the same target
+		ingest: function(e) {
+			var _this = this,
+				$input,
+				key,
+				value;
+
 			if (!this.readOnly) {
 				this.target = e.target;
-				this.model.set(this.parseModel(this.view.$el));
+
+				$input = $(e.target);
+				key = $input.attr('name');
+
+				if (key && key.indexOf('[')) {
+					key = key.replace(/\[\]/g, function() {return '[' + _this.view.$('[name]').filter('[name="' + key + '"]').index($input) + ']'});
+					key = _._dotToBracketNotation(key, true);
+				}
+				if ($input.is(':checkbox')) {
+					value = $input.prop('checked');
+				} else {
+					value = $input.val();
+				}
+
+				this.model.set(key, value);
+
 				delete this.target;
 			}
 		},
-		parseModel: _._parseModel.bind(_),
+		bootstrap: function() {
+			this.inject(this.model, {bootstrap: _._flatten(this.model.toJSON())});
+		},
 		inject: function(model, options) {
 			var _this = this,
 				view = this.view,
-				changed = model.changedAttributes();
+				changed = options.bootstrap || model.changedAttributes();
 
 			if (view.lockBinding) {
 				return this;
 			}
 
 			if (_.isFunction(view.beforeRender)) {
-				view.beforeRender(changed);
+				view.beforeRender(model, changed);
 			}
 
 			changed = _._flatten(changed);
@@ -361,7 +383,7 @@ _.mixin({
 						$bound = view.$('[name="'+path+'"], '+nameSelector+'').not(_this.target);
 
 					if ($bound.is(':input')) {
-						if ($bound.is('[type="checkbox"]')) {
+						if ($bound.is(':checkbox')) {
 							$bound.prop('checked', !!value).trigger('change');
 						} else {
 							$bound.val(value).trigger('change');
