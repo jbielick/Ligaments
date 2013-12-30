@@ -29,18 +29,22 @@ var Hash = new function(_) {
 		return context.set;
 	},
 	this.parseModel = function(el, returnInputs) {
-		var $bound = $(el).find('[name], [data-ligament]'),
+		var $bound = $(el).find('[name], [data-bind]'),
 			flat = {},
+			_$this,
 			name;
 
 		$bound.each(function() {
-			var _$this = $(this);
+			_$this = $(this);
 			name = _$this.attr('name');
 			if (name) {
 				name = name.replace(/\[.{0}\]/g, function() {return '[' + $bound.filter('[name="' + name + '"]').index(_$this) + ']'});
 			}
-			if (_$this.is(':input') && (!_$this.is(':checkbox') || _$this.prop('checked'))) {
-				flat[name] = _$this.val();
+
+			if (_$this.is(':input')) {
+				if ((!_$this.is(':checkbox') || _$this.prop('checked')) && (!_$this.is(':radio') || _$this.prop('checked'))) {
+					flat[name] = _$this.val();
+				}
 			} else {
 				flat[name] = _$this.text();
 			}
@@ -316,7 +320,7 @@ _.mixin({
 		if (!this.readOnly) {
 			this.model.set(data);
 		}
-		this.model.trigger('change', this.model, _._flatten(this.model.toJSON()));
+		// this.model.trigger('change', this.model, _._flatten(this.model.toJSON()));
 	};
 
 	var ligamentOptions	 = ['readOnly', 'view', 'model', 'bindings', 'binds', 'parse'];
@@ -327,10 +331,13 @@ _.mixin({
 			var inject = _.bind(this.inject, this);
 
 			this.view.listenTo(this.model, 'change', inject);
+
 			if (!this.readOnly) {
 				_.extend((this.view.events || (this.view.events = {})), {
-					'change *[name]'	: ingest,
-					'input *[name]'		: ingest
+					'change *[name]'		: ingest,
+					'input *[name]'			: ingest,
+					'change *[data-bind]' 	: ingest,
+					'input *[data-bind]' 	: ingest
 				});
 				this.view.delegateEvents();
 			}
@@ -367,7 +374,12 @@ _.mixin({
 				if (this.parse) {
 					data = this.model.parse(data) || data;
 				}
-				this.model.set(data);
+
+				if (value === undefined) {
+					this.model.unset(key);
+				} else {
+					this.model.set(data);
+				}
 
 				delete this.target;
 			}
@@ -392,6 +404,12 @@ _.mixin({
 
 			_.each(changed, function(value, path) {
 				if (!_this.binds || _.indexOf(_this.binds, path) > -1) {
+
+					if (/[0-9]+/.test(path.split('').pop())) {
+						path = path.split('.');
+						path.pop();
+						path = path.join('.');
+					}
 					var nameAttr = _._dotToBracketNotation(path),
 						nameSelector = nameAttr.replace(/(.*\[)([0-9]+)?(\].*)/g, '[name="$1$3"]:eq($2)'),
 						$bound = view.$('[name="'+path+'"], '+nameSelector+', [name="'+nameAttr+'"]').not(_this.target);
@@ -400,12 +418,16 @@ _.mixin({
 						if ($bound.length > 1) {
 							$bound.prop('checked', false).filter('[value="'+value+'"]').prop('checked', true);	
 						} else {
-							$bound.val(value);
+							if ($bound.is('select[multiple]')) {
+								$bound.val(_this.model.get(path));
+							} else {
+								$bound.val(value);
+							}
 						}
 					} else if ($bound.is('img, svg')) {
 						$bound.attr('src', value);
 					} else {
-						$bound.html(value.toString());
+						$bound.html(value);
 					}
 				}
 			});
