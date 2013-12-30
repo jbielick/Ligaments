@@ -368,7 +368,10 @@ _.mixin({
 				if (!$input.is(':checkbox') || $input.prop('checked')) {
 					value = $input.val();
 				}
-
+				if ($input.is('select[multiple]')) {
+					this.model.unset(key);
+				}
+				
 				(data = {})[key] = value;
 				data = _._expand(data);
 				if (this.parse) {
