@@ -302,19 +302,24 @@ _.mixin({
 }(function(_, Backbone) {
 
 	var Ligaments = Backbone.Ligaments = function(options) {
+		var data;
 		this.cid = _.uniqueId('ligament');
 		options || (options = {});
 		this.ensureArguments.call(this, options);
 		_.extend(this, _.pick(options, ligamentOptions));
 		this.bootstrap();
 		this.createBindings();
+		data = _._parseModel(this.view.$el);
+		if (this.parse) {
+			data = this.model.parse(data) || data;
+		}
 		if (!this.readOnly) {
-			this.model.set(_._parseModel(this.view.$el));
+			this.model.set(data);
 		}
 		this.model.trigger('change', this.model, _._flatten(this.model.toJSON()));
 	};
 
-	var ligamentOptions	 = ['readOnly', 'view', 'model', 'bindings', 'binds'];
+	var ligamentOptions	 = ['readOnly', 'view', 'model', 'bindings', 'binds', 'parse'];
 
 	_.extend(Ligaments.prototype, {
 		createBindings: function() {
@@ -339,7 +344,8 @@ _.mixin({
 			var _this = this,
 				$input,
 				key,
-				value;
+				value,
+				data;
 
 			if (!this.readOnly) {
 				this.target = e.target;
@@ -356,7 +362,12 @@ _.mixin({
 					value = $input.val();
 				}
 
-				this.model.set(key, value);
+				(data = {})[key] = value;
+				data = _._expand(data);
+				if (this.parse) {
+					data = this.model.parse(data) || data;
+				}
+				this.model.set(data);
 
 				delete this.target;
 			}
@@ -386,10 +397,10 @@ _.mixin({
 						$bound = view.$('[name="'+path+'"], '+nameSelector+', [name="'+nameAttr+'"]').not(_this.target);
 
 					if ($bound.is(':input')) {
-						if ($bound.is(':checkbox')) {
-							$bound.prop('checked', !!value).trigger('change');
+						if ($bound.length > 1) {
+							$bound.prop('checked', false).filter('[value="'+value+'"]').prop('checked', true);	
 						} else {
-							$bound.val(value).trigger('change');
+							$bound.val(value);
 						}
 					} else if ($bound.is('img, svg')) {
 						$bound.attr('src', value);
