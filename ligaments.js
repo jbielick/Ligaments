@@ -8,340 +8,288 @@
  #
 */
 
-var Hash,
-  __hasProp = {}.hasOwnProperty,
-  __slice = [].slice;
 
-Hash = new function() {
-  this.extract = function(data, path) {
-    var context, got, item, key, token, tokens, _i, _j, _len, _len1, _ref;
-    if (!(new RegExp("{|\[")).test(path)) {
-      (_._get(data, path)) || [];
+(function() {
+  var __hasProp = {}.hasOwnProperty,
+    __slice = [].slice;
+
+  (function(factory) {
+    if (typeof define === 'function' && define.amd) {
+      return define(['underscore', 'backbone'], factory);
+    } else {
+      return factory(_, Backbone);
     }
-    tokens = _._tokenize(path);
-    context = {
-      set: [data]
+  })(function(_, Backbone) {
+    var Ligaments, ligamentOptions;
+    Ligaments = Backbone.Ligaments = function(options) {
+      this.cid = _.uniqueId('ligament');
+      options || (options = {});
+      this.ensureArguments.call(this, options);
+      _.extend(this, _.pick(options, ligamentOptions));
+      this.bootstrap();
+      this.createBindings();
+      if (!this.readOnly) {
+        return this.model.set(this.parseModel(this.view.$el));
+      }
     };
-    for (_i = 0, _len = tokens.length; _i < _len; _i++) {
-      token = tokens[_i];
-      got = [];
-      _ref = context.set;
-      for (item in _ref) {
-        if (!__hasProp.call(_ref, item)) continue;
-        for (_j = 0, _len1 = item.length; _j < _len1; _j++) {
-          key = item[_j];
-          if (_._matchToken(key, token)) {
-            got.push(item);
+    ligamentOptions = ['view', 'model', 'readOnly', 'bindings'];
+    return _.extend(Ligaments.prototype, {
+      createBindings: function() {
+        var ingest, inject;
+        ingest = _.bind(this.ingest, this);
+        inject = _.bind(this.inject, this);
+        this.view.listenTo(this.model, 'change', inject);
+        if (!this.readOnly) {
+          _.extend(this.view.events || (this.view.events = {}), {
+            'change *[name]': ingest,
+            'input *[name]': ingest,
+            'change *[data-bind]': ingest,
+            'input *[data-bind]': ingest
+          });
+          return this.view.delegateEvents();
+        }
+      },
+      ensureArguments: function(options) {
+        if (!options.view || !options.model) {
+          throw new Error('You must provide an instance of a Backbone view and model');
+        }
+      },
+      ingest: function(e) {
+        var $input, data, key, value,
+          _this = this;
+        _this = this;
+        if (!this.readOnly) {
+          $input = $((this.target = e.target));
+          key = $input.attr('name') || $input.attr('data-bind');
+          if (key && key.indexOf('[' > -1)) {
+            key = key.replace(/\[\]/g, function() {
+              return '[' + _this.view.$('[name]').filter('[name="' + key + '"]').index($input) + ']';
+            });
+            key = this.dotToBracketNotation(key, true);
+          }
+          value = this.getVal($input);
+          if ($input.is('select[multiple]')) {
+            this.model.unset(key);
+          }
+          (data = {})[key] = value;
+          data = this.expand(data);
+          if (this.parse && _.isFunction(this.model.parse)) {
+            this.model.parse(data);
+          }
+          if (value == null) {
+            this.model.unset(key);
+          } else {
+            this.model.set(data);
+          }
+          return delete this.target;
+        }
+      },
+      bootstrap: function() {
+        return this.inject(this.model, {
+          bootstrap: this.flatten(this.model.toJSON())
+        });
+      },
+      inject: function(model, options) {
+        var $bound, changed, eqNameSelector, nameAttribute, nameSelectors, path, value, _results;
+        changed = options.bootstrap || model.changedAttributes();
+        if (this.lockBinding) {
+          return this;
+        }
+        if (_.isFunction(this.view.beforeInject)) {
+          this.view.beforeInject(model, changed);
+        }
+        changed = this.flatten(changed);
+        _results = [];
+        for (path in changed) {
+          if (!__hasProp.call(changed, path)) continue;
+          value = changed[path];
+          if (!this.binds || _.indexOf(this.binds, path) > -1) {
+            if (/[0-9]+/.test(path.split('').pop())) {
+              path = path.split('.');
+              path.pop();
+              path = path.join('.');
+            }
+            nameAttribute = this.dotToBracketNotation(path);
+            eqNameSelector = nameAttribute.replace(/(.*\[)([0-9]+)?(\].*)/g, '[name="$1$3"]:eq($2)');
+            nameSelectors = '[data-bind="' + path + '"], [name="' + path + '"] ' + eqNameSelector + ', [name="' + nameAttribute + '"]';
+            $bound = this.view.$(nameSelectors).not(this.target);
+            if ($bound.is(':input')) {
+              if ($bound.length > 1) {
+                _results.push($bound.prop('checked', false).filter('[value="' + value + '"]').prop('checked', true));
+              } else {
+                if ($bound.is('select[multiple]')) {
+                  _results.push($bound.val(this.model.get(path)));
+                } else {
+                  _results.push($bound.val(value));
+                }
+              }
+            } else if ($bound.is('img, svg')) {
+              _results.push($bound.attr('src', value));
+            } else {
+              _results.push($bound.html(value));
+            }
+          } else {
+            _results.push(void 0);
           }
         }
-      }
-      context.set = got;
-    }
-    return context.set;
-  };
-  this.parseModel = function(el) {
-    var $bound, flat;
-    $bound = $(el).find('[name], [data-ligament]');
-    flat = {};
-    $bound.each(function() {
-      var $this, name;
-      $this = $(this);
-      name = $this.attr('name') || $this.attr('data-bind');
-      if (name) {
-        name = name.replace(/\[\]/g, function() {
-          return '[' + $bound.filter('[name="' + name + '"]').index($this) + ']';
+        return _results;
+      },
+      parseModel: function(el) {
+        var $bound, flat,
+          _this = this;
+        $bound = $(el).find('[name], [data-ligament]');
+        flat = {};
+        $bound.each(function(idx, el) {
+          var $this, name;
+          $this = $(el);
+          name = $this.attr('name') || $this.attr('data-bind');
+          name = name.replace(/\[\]/g, function() {
+            return '[' + $bound.filter('[name="' + name + '"], [data-bind="' + name + '"]').index($this) + ']';
+          });
+          return flat[name] = _this.getVal($this);
         });
-        if ($this.is(':input') && (!$this.is(':checkbox') || $this.prop('checked')) && (!$this.is(':radio') || $this.prop(':checked'))) {
-          return flat[name] = $this.val();
+        return this.expand(flat);
+      },
+      getVal: function(input) {
+        var $input;
+        $input = $(input);
+        if ($input.is(':input')) {
+          if ((!$input.is(':checkbox') && !$input.is(':radio')) || $input.prop('checked')) {
+            return $input.val();
+          } else {
+            return void 0;
+          }
         } else {
-          return flat[name] = $this.text();
+          return $input.text();
+        }
+      },
+      matchToken: function(key, token) {
+        if (token === '{n}') {
+          Number(key) % 1 === 0;
+        }
+        if (token === '{s}') {
+          typeof key === string;
+        }
+        if (parseInt(token, 10) % 1 === 0) {
+          key === parseInt(token, 10);
+        }
+        return key === token;
+      },
+      expand: function(flat) {
+        var child, out, parent, path, set, token, tokens, value, _i, _j, _len, _len1;
+        if (flat.constructor !== Array) {
+          flat = [flat];
+        }
+        for (_i = 0, _len = flat.length; _i < _len; _i++) {
+          set = flat[_i];
+          for (path in set) {
+            if (!__hasProp.call(set, path)) continue;
+            value = set[path];
+            tokens = this.tokenize(path).reverse();
+            value = _.result(set, path);
+            if (tokens[0] === '{n}' || !isNaN(Number(tokens[0]))) {
+              (child = [])[tokens[0]] = value;
+            } else {
+              (child = {})[tokens[0]] = value;
+            }
+            tokens.shift();
+            for (_j = 0, _len1 = tokens.length; _j < _len1; _j++) {
+              token = tokens[_j];
+              if (!isNaN(Number(token))) {
+                (parent = [])[parseInt(token, 10)] = child;
+              } else {
+                (parent = {})[token] = child;
+              }
+              child = parent;
+            }
+            this.merge((out = out || (out = {})), child);
+          }
+        }
+        return out;
+      },
+      flatten: function(data, separator, depthLimit) {
+        var curr, el, key, out, path, stack;
+        if (separator == null) {
+          separator = '.';
+        }
+        if (depthLimit == null) {
+          depthLimit = false;
+        }
+        data = this.merge({}, data);
+        path = '';
+        stack = [];
+        while (_.keys(data).length || data.length) {
+          if (_.isArray(data)) {
+            key = data.length - 1;
+            el = data.pop();
+          } else {
+            key = _.keys(data)[0];
+            el = data[key];
+            delete data[key];
+          }
+          if (path.split(separator).length === depthLimit || typeof el !== 'object' || el.nodeType) {
+            (out = {})[path + key] = el;
+          } else {
+            if (_.keys(data).length > 0) {
+              (stack = stack || []).push([data, path]);
+            }
+            data = el;
+            path += key + separator;
+          }
+          if (_.keys(data).length === 0 && stack.length > 0) {
+            curr = stack.pop();
+            data = curr[0], path = curr[1];
+          }
+        }
+        return out;
+      },
+      merge: function() {
+        var key, object, objects, out, value, _i, _len, _this;
+        objects = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+        _this = this;
+        out = objects.shift();
+        for (_i = 0, _len = objects.length; _i < _len; _i++) {
+          object = objects[_i];
+          for (key in object) {
+            if (!__hasProp.call(object, key)) continue;
+            value = object[key];
+            if (out[key] && value && _.isObject(out[key]) && _.isObject(value)) {
+              out[key] = this.merge(out[key], value);
+            } else {
+              out[key] = value;
+            }
+          }
+        }
+        return out;
+      },
+      dotToBracketNotation: function(path, reverse) {
+        if (reverse == null) {
+          reverse = false;
+        }
+        if (!path) {
+          throw new TypeError('Not Enough Arguments');
+        }
+        if (reverse) {
+          return path.replace(/\]/g, '').split('[').join('.');
+        } else {
+          return path.replace(/([\w]+)\.?/g, '[$1]').replace(/^\[(\w+)\]/, '$1');
+        }
+      },
+      tokenize: function(path) {
+        if (path.indexOf('[') === -1) {
+          return path.split('.');
+        } else {
+          return _.map(path.split('['), function(v) {
+            v = v.replace(/\]/, '');
+            if (v === '') {
+              return '{n}';
+            } else {
+              return v;
+            }
+          });
         }
       }
     });
-    return _._expand(flat);
-  };
-  this.matchToken = function(key, token) {
-    if (token === '{n}') {
-      Number(key) % 1 === 0;
-    }
-    if (token === '{s}') {
-      typeof key === string;
-    }
-    if (parseInt(token, 10) % 1 === 0) {
-      key === parseInt(token, 10);
-    }
-    return key === token;
-  };
-  this.expand = function(flat) {
-    var child, out, parent, path, set, token, tokens, value, _i, _j, _len, _len1;
-    if (flat.constructor !== Array) {
-      flat = [flat];
-    }
-    for (_i = 0, _len = flat.length; _i < _len; _i++) {
-      set = flat[_i];
-      for (path in set) {
-        if (!__hasProp.call(set, path)) continue;
-        value = set[path];
-        tokens = _._tokenize(path).reverse();
-        value = _.result(set, path);
-        if (tokens[0] === '{n}' || !isNaN(Number(tokens[0]))) {
-          (child = [])[tokens[0]] = value;
-        } else {
-          (child = {})[tokens[0]] = value;
-        }
-        tokens.shift();
-        for (_j = 0, _len1 = tokens.length; _j < _len1; _j++) {
-          token = tokens[_j];
-          if (!isNaN(Number(token))) {
-            (parent = [])[parseInt(token, 10)] = child;
-          } else {
-            (parent = {})[token] = child;
-          }
-          child = parent;
-        }
-        _._merge((out = out || (out = {})), child);
-      }
-    }
-    return out;
-  };
-  this.get = function(data, path) {
-    var out, token, tokens, _i, _len;
-    tokens = _._tokenize(path);
-    out = data;
-    for (_i = 0, _len = tokens.length; _i < _len; _i++) {
-      token = tokens[_i];
-      if (typeof out === 'object') {
-        if (_.isFunction(out.get)) {
-          out = out.get(token);
-        } else if (out[token] != null) {
-          out = out[token];
-        } else {
-          void 0;
-        }
-      } else {
-        void 0;
-      }
-    }
-    return out;
-  };
-  this.tokenize = function(path) {
-    if (path.indexOf('[') === -1) {
-      return path.split('.');
-    } else {
-      return _.map(path.split('['), function(v) {
-        v = v.replace(/\]/, '');
-        if (v === '') {
-          return '{n}';
-        } else {
-          return v;
-        }
-      });
-    }
-  };
-  this.flatten = function(data, separator, depthLimit) {
-    var curr, el, key, out, path, stack;
-    if (separator == null) {
-      separator = '.';
-    }
-    if (depthLimit == null) {
-      depthLimit = false;
-    }
-    data = _._merge({}, data);
-    path = '';
-    stack = [];
-    while (_.keys(data).length || data.length) {
-      if (_.isArray(data)) {
-        key = data.length - 1;
-        el = data.pop();
-      } else {
-        key = _.keys(data)[0];
-        el = data[key];
-        delete data[key];
-      }
-      if (path.split(separator).length === depthLimit || typeof el !== 'object' || el.nodeType) {
-        (out = {})[path + key] = el;
-      } else {
-        if (_.keys(data).length > 0) {
-          (stack = stack || []).push([data, path]);
-        }
-        data = el;
-        path += key + separator;
-      }
-      if (_.keys(data).length === 0 && stack.length > 0) {
-        curr = stack.pop();
-        data = curr[0], path = curr[1];
-      }
-    }
-    return out;
-  };
-  this.merge = function() {
-    var key, object, objects, out, value, _i, _len, _this;
-    objects = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-    _this = this;
-    out = objects.shift();
-    for (_i = 0, _len = objects.length; _i < _len; _i++) {
-      object = objects[_i];
-      for (key in object) {
-        if (!__hasProp.call(object, key)) continue;
-        value = object[key];
-        if (out[key] && value && _.isObject(out[key]) && _.isObject(value)) {
-          out[key] = _._merge(out[key], value);
-        } else {
-          out[key] = value;
-        }
-      }
-    }
-    return out;
-  };
-  this.dotToBracketNotation = function(path, reverse) {
-    if (reverse == null) {
-      reverse = false;
-    }
-    if (!path) {
-      throw new TypeError('Not Enough Arguments');
-    }
-    if (reverse) {
-      return path.replace(/\]/g, '').split('[').join('.');
-    } else {
-      return path.replace(/([\w]+)\.?/g, '[$1]').replace(/^\[(\w+)\]/, '$1');
-    }
-  };
-  return Hash;
-};
-
-_.mixin({
-  _parseModel: Hash.parseModel,
-  _matchToken: Hash.matchToken,
-  _expand: Hash.expand,
-  _get: Hash.get,
-  _tokenize: Hash.tokenize,
-  _flatten: Hash.flatten,
-  _merge: Hash.merge,
-  _dotToBracketNotation: Hash.dotToBracketNotation
-});
-
-(function(factory) {
-  if (typeof define === 'function' && define.amd) {
-    return define(['underscore', 'backbone'], factory);
-  } else {
-    return factory(_, Backbone);
-  }
-})(function(_, Backbone) {
-  var Ligaments, ligamentOptions;
-  Ligaments = Backbone.Ligaments = function(options) {
-    this.cid = _.uniqueId('ligament');
-    options || (options = {});
-    this.ensureArguments.call(this, options);
-    _.extend(this, _.pick(options, ligamentOptions));
-    this.bootstrap();
-    this.createBindings();
-    if (!this.readOnly) {
-      return this.model.set(_._parseModel(this.view.$el));
-    }
-  };
-  ligamentOptions = ['view', 'model', 'readOnly', 'bindings'];
-  return _.extend(Ligaments.prototype, {
-    createBindings: function() {
-      var ingest, inject;
-      ingest = _.bind(this.ingest, this);
-      inject = _.bind(this.inject, this);
-      this.view.listenTo(this.model, 'change', inject);
-      if (!this.readOnly) {
-        _.extend(this.view.events || (this.view.events = {}), {
-          'change *[name]': ingest,
-          'input *[name]': ingest,
-          'change *[data-bind]': ingest,
-          'input *[data-bind]': ingest
-        });
-        return this.view.delegateEvents();
-      }
-    },
-    ensureArguments: function(options) {
-      if (!options.view || !options.model) {
-        throw new Error('You must provide an instance of a Backbone view and model');
-      }
-    },
-    ingest: function(e) {
-      var $input, data, key, value,
-        _this = this;
-      _this = this;
-      if (!this.readOnly) {
-        $input = $((this.target = e.target));
-        key = $input.attr('name') || $input.attr('data-bind');
-        if (key && key.indexOf('[' > -1)) {
-          key = key.replace(/\[\]/g, function() {
-            return '[' + _this.view.$('[name]').filter('[name="' + key + '"]').index($input) + ']';
-          });
-          key = _._dotToBracketNotation(key, true);
-        }
-        if (!$input.is(':checkbox') || $input.prop('checked')) {
-          value = $input.val();
-        }
-        if ($input.is('select[multiple]')) {
-          this.model.unset(key);
-        }
-        (data = {})[key] = value;
-        data = _._expand(data);
-        if (this.parse && _.isFunction(this.model.parse)) {
-          this.model.parse(data);
-        }
-        if (value == null) {
-          this.model.unset(key);
-        } else {
-          this.model.set(data);
-        }
-        return delete this.target;
-      }
-    },
-    bootstrap: function() {
-      return this.inject(this.model, {
-        bootstrap: _._flatten(this.model.toJSON())
-      });
-    },
-    inject: function(model, options) {
-      var $bound, changed, eqNameSelector, nameAttribute, nameSelectors, path, value, _results;
-      changed = options.bootstrap || model.changedAttributes();
-      if (this.lockBinding) {
-        return this;
-      }
-      if (_.isFunction(this.view.beforeInject)) {
-        this.view.beforeInject(model, changed);
-      }
-      changed = _._flatten(changed);
-      _results = [];
-      for (path in changed) {
-        if (!__hasProp.call(changed, path)) continue;
-        value = changed[path];
-        if (!this.binds || _.indexOf(this.binds, path) > -1) {
-          if (/[0-9]+/.test(path.split('').pop())) {
-            path = path.split('.');
-            path.pop();
-            path = path.join('.');
-          }
-          nameAttribute = _._dotToBracketNotation(path);
-          eqNameSelector = nameAttribute.replace(/(.*\[)([0-9]+)?(\].*)/g, '[name="$1$3"]:eq($2)');
-          nameSelectors = '[data-bind="' + path + '"], [name="' + path + '"] ' + eqNameSelector + ', [name="' + nameAttribute + '"]';
-          $bound = this.view.$(nameSelectors).not(this.target);
-          if ($bound.is(':input')) {
-            if ($bound.length > 1) {
-              _results.push($bound.prop('checked', false).filter('[value="' + value + '"]').prop('checked', true));
-            } else {
-              if ($bound.is('select[multiple]')) {
-                _results.push($bound.val(this.model.get(path)));
-              } else {
-                _results.push($bound.val(value));
-              }
-            }
-          } else if ($bound.is('img, svg')) {
-            _results.push($bound.attr('src', value));
-          } else {
-            _results.push($bound.html(value));
-          }
-        } else {
-          _results.push(void 0);
-        }
-      }
-      return _results;
-    }
   });
-});
+
+}).call(this);

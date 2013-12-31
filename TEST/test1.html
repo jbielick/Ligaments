@@ -57,7 +57,7 @@
 					$('#attr').html(JSON.stringify(model.toJSON(), null, '  '));
 				});
 
-				var inputView = new ViewClass({el: 'form'});
+				var inputView = new ViewClass({el: '#form'});
 
 				new Backbone.Ligaments({model: model, view: inputView});
 
@@ -72,7 +72,7 @@
 			<br>
 			<small>View 1 - Model 1 (two-way)</small>
 		</h1>
-		<form>
+		<div id="form">
 			<fieldset>
 				<legend>Complex Paths:</legend>
 				<table>
@@ -120,7 +120,7 @@
 					</tr>
 				</table>
 			</fieldset>
-		</form>
+		</div>
 		<h1>Model Attributes</h1>
 		<pre id="attr">
 
