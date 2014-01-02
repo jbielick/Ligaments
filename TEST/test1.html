@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Ligaments Test 1</title>
+	<style type="text/css">
+		body {font-family: sans-serif;}
+		.container {max-width:960px;margin:100px auto;}
+		fieldset {margin:20px 0;padding:20px;}
+		pre {margin:20px;padding:20px;background-color:#eee;}
+	</style>
+	<script type="text/javascript" src="../lib/require.js"></script>
+	<script type="text/javascript">
+		require.config({
+			baseUrl: '../lib',
+			paths: {
+				backboneRelational: 'backbone-relational',
+				ligaments: '../ligaments'
+			},
+			shim: {
+				underscore: {
+					exports: '_'
+				},
+				ligaments: {
+					deps: ['backbone']
+				},
+				'backbone-deepmodel': {
+					deps: ['backbone']
+				},
+				backbone: {
+					deps: ['jquery', 'underscore'],
+					exports: 'Backbone'
+				}
+			}
+		});
+
+		require(['backbone', 'ligaments', 'backbone-deepmodel'], function(Backbone) {
+			$(document).ready(function() {
+
+				var ReadOnlyViewClass = Backbone.View.extend({
+					beforeInject: function(model, changed) {;
+						if (_.has(changed, 'data.User.0.name')) {
+							 changed['data.User.0.name'] = changed['data.User.0.name'].toUpperCase();
+						}
+						if (_.has(changed, 'data.User.1.name')) {
+							changed['data.User.1.name'] = changed['data.User.1.name'].split('').reverse().join('');
+						}
+					}
+				});
+
+				var ViewClass = Backbone.View.extend();
+
+				var ModelClass = Backbone.DeepModel.extend();
+
+				model = new ModelClass({data: {User: [{name: 'Larry Bird'}]}});
+
+				model.on('change', function(model) {
+					$('#attr').html(JSON.stringify(model.toJSON(), null, '  '));
+				});
+
+				var inputView = new ViewClass({el: '#form'});
+
+				new Backbone.Ligaments({model: model, view: inputView});
+
+			});
+		});
+	</script>
+</head>
+<body>
+	<div class="container">
+		<h1>
+			Model &lt;-&gt; View Binding
+			<br>
+			<small>View 1 - Model 1 (two-way)</small>
+		</h1>
+		<div id="form">
+			<fieldset>
+				<legend>Complex Paths:</legend>
+				<table>
+					<tr>
+						<td>
+							<label>User 0 Name:</label>
+							<input type="text" name="data[User][0][name]" value="Josh">
+						</td>
+						<td>
+							<label>User 0 Group:</label>
+							<select name="data[User][0][group_id]">
+								<option value="1">Admin</option>
+								<option value="2">User</option>
+							</select>
+						</td>
+						<td>
+							<label>Tall</label>
+							<input type="checkbox" name="data[User][0][tall]" value="1" checked>
+						</td>
+						<td>
+							<label>Image SRC</label>
+							<input type="text" name="data[User][0][img]">
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<label>User 1 Name:</label>
+							<input type="text" name="data[User][1][name]">
+						</td>
+						<td>
+							<label>User 1 Group:</label>
+							<select name="data[User][1][group_id]">
+								<option value="1">Admin</option>
+								<option value="2">User</option>
+							</select>
+						</td>
+						<td>
+							<label>Tall</label>
+							<input type="checkbox" name="data[User][1][tall]" value="1">
+						</td>
+						<td>
+							<label>Image SRC</label>
+							<input type="text" name="data[User][1][img]">
+						</td>
+					</tr>
+				</table>
+			</fieldset>
+		</div>
+		<h1>Model Attributes</h1>
+		<pre id="attr">
+
+		</pre>
+	</div>
+</body>
+</html>
