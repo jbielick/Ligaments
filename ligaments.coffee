@@ -113,7 +113,8 @@
 				name = name.replace /\[\]/g, () ->
 					'['+$bound.filter('[name="'+name+'"], [data-bind="'+name+'"]').index($this) + ']'
 
-				flat[name] = @getVal($this);
+				if (typeof @getVal($this) isnt 'undefined')
+					flat[name] = @getVal($this);
 
 			@expand flat
 		getVal: (input) ->
@@ -158,7 +159,7 @@
 			path = ''
 			stack = []
 
-			while _.keys(data).length or data.length
+			while (_.isObject(data) and _.keys(data).length) or (_.isArray(data) and data.length)
 				if _.isArray data
 					key = data.length - 1
 					el = data.pop()
@@ -166,23 +167,22 @@
 					key = _.keys(data)[0]
 					el = data[key]
 					delete data[key]
-				if path.split(separator).length is depthLimit or typeof el isnt 'object' or el.nodeType
+				if path.split(separator).length is depthLimit or typeof el isnt 'object' or (el and el.nodeType)
 					(out = {})[path + key] = el
 				else
 					if _.keys(data).length > 0
 						(stack = stack or []).push [data, path]
 					data = el
 					path += key + separator
-				if (_.keys(data).length is 0 and stack.length > 0)
+				if (_.isObject(data) and _.keys(data).length is 0 and stack.length > 0)
 					curr = stack.pop()
 					[data, path] = curr
 			out
 		merge: (objects...) ->
-			_this = @
 			out = objects.shift()
 			for object in objects
 				for own key, value of object
-					if out[key] and value and _.isObject(out[key]) and _.isObject(value)
+					if out[key] and value and (_.isObject(out[key]) and _.isObject(value) or out[key].constructor is Array)
 						out[key] = @merge out[key], value
 					else
 						out[key] = value

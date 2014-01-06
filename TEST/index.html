@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Backbone Ligaments Unit Tests</title>
+<link rel="stylesheet" href="./qunitjs/qunit/qunit.css">
+</head>
+<body>
+	<div id="qunit"></div>
+	<div id="qunit-fixture"></div>
+	<div class="container">
+		<h1>
+			Model &lt;-&gt; View Binding
+			<br>
+			<small>View 1 - Model 1 (two-way)</small>
+		</h1>
+		<form>
+			<fieldset>
+				<legend>Complex Paths:</legend>
+				<table>
+					<tr>
+						<td>
+							<label>User 0 Name:</label>
+							<input type="text" name="data[User][0][name]" value="Josh">
+						</td>
+						<td>
+							<label>User 0 Group:</label>
+							<select name="data[User][0][group_id]">
+								<option value="1">Admin</option>
+								<option value="2">User</option>
+							</select>
+						</td>
+						<td>
+							<label>Tall</label>
+							<input type="checkbox" name="data[User][0][tall]" value="1" checked>
+						</td>
+						<td>
+							<label>Image SRC</label>
+							<input type="text" name="data[User][0][img]">
+						</td>
+					</tr>
+					<tr>
+						<td>
+							preference
+						</td>
+						<td>
+							<label>Pref 1</label>
+							<input type="radio" name="data[User][0][preference]" value="1">
+							<label>Pref 2</label>
+							<input type="radio" name="data[User][0][preference]" value="2">
+							<label>Pref 3</label>
+							<input type="radio" name="data[User][0][preference]" value="3" checked>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							Likes
+						</td>
+						<td>
+							<select multiple name="data[User][0][likes]">
+								<option value="cats">Cats</option>
+								<option value="dogs">Dogs</option>
+								<option value="frogs">Frogs</option>
+							</select>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							Tags
+						</td>
+						<td>
+							<label>Cool</label>
+							<input type="checkbox" name="data[User][0][tags][]" value="Cool" checked>
+							<label>Smart</label>
+							<input type="checkbox" name="data[User][0][tags][]" value="Smart" checked>
+							<label>Pretty</label>
+							<input type="checkbox" name="data[User][0][tags][]" value="Pretty">
+							<label>Dumb</label>
+							<input type="checkbox" name="data[User][0][tags][]" value="Dumb">
+						</td>
+					</tr>
+				</table>
+			</fieldset>
+		</form>
+	</div>
+	<script type="text/javascript" src="./qunitjs/qunit/qunit.js"></script>
+	<script type="text/javascript" src="../lib/require.js"></script>
+	<script type="text/javascript">
+		require.config({
+			baseUrl: '../lib',
+			paths: {
+				backboneRelational: 'backbone-relational',
+				ligaments: '../ligaments'
+			},
+			shim: {
+				underscore: {
+					exports: '_'
+				},
+				ligaments: {
+					deps: ['backbone']
+				},
+				'backbone-deepmodel': {
+					deps: ['backbone']
+				},
+				backbone: {
+					deps: ['jquery', 'underscore'],
+					exports: 'Backbone'
+				}
+			}
+		});
+
+		function setup() {
+			var ViewClass = Backbone.View.extend();
+			var ModelClass = Backbone.DeepModel.extend();
+			model = new ModelClass();
+			view = new ViewClass({el: 'form'});
+			new Backbone.Ligaments({model: model, view: view});
+			return [model, view];
+		}
+
+		require(['backbone', 'ligaments', 'backbone-deepmodel'], function(Backbone) {
+
+
+			module('parseModel');
+			test('initial collect', function() {
+				var vars = setup();
+				var model = vars[0];
+				var view = vars[1];
+
+				var data = {
+					"data": {
+						"User": [{
+							"name": "Josh",
+							"group_id": "1",
+							"tall": "1",
+							"img": "",
+							"preference": "3",
+							"likes": null,
+							"tags": [
+								"Cool",
+								"Smart"
+							]
+						}]
+					}
+				};
+
+				deepEqual(model.toJSON(), data, 'collects the right data');
+			});
+
+		});
+	</script>
+</body>
+</html>
