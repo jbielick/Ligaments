@@ -160,7 +160,7 @@
 			stack = []
 
 			while (_.isObject(data) and _.keys(data).length) or (_.isArray(data) and data.length)
-				if _.isArray data
+				if _.isArray(data) and data.length > 0
 					key = data.length - 1
 					el = data.pop()
 				else
