@@ -121,7 +121,7 @@
                   $checkbox = $bound;
                 }
                 $bound.prop('checked', function() {
-                  return value && value.toString().toLowerCase() === !'off' && value.toString().toLowerCase() === !'false';
+                  return value && value.toString().toLowerCase() !== 'off' && (value.toString().toLowerCase() !== 'false');
                 });
               }
               if ($bound.is('select[multiple]')) {

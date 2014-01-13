@@ -98,7 +98,7 @@
 							else
 								$checkbox = $bound
 							$bound.prop('checked', () -> 
-								return value and value.toString().toLowerCase() is not 'off' and value.toString().toLowerCase() is not 'false'
+								return value and value.toString().toLowerCase() isnt 'off' and (value.toString().toLowerCase() isnt 'false')
 							)
 						if $bound.is 'select[multiple]'
 							$bound.val @model.get path
