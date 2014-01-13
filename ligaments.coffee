@@ -92,13 +92,18 @@
 					$bound = @view.$(nameSelectors).not(@target)
 
 					if $bound.is ':input'
-						if $bound.length > 1
-							$bound.prop('checked', false).filter('[value="'+value+'"]').prop 'checked', true
-						else
-							if $bound.is 'select[multiple]'
-								$bound.val @model.get path
+						if $bound.is ':checkbox'
+							if $bound.length > 1
+								$checkbox = $bound.prop('checked', false).filter('[value="'+value+'"]')
 							else
-								$bound.val value
+								$checkbox = $bound
+							$bound.prop('checked', () -> 
+								return value and value.toString().toLowerCase() is not 'off' and value.toString().toLowerCase() is not 'false'
+							)
+						if $bound.is 'select[multiple]'
+							$bound.val @model.get path
+						else
+							$bound.val value
 					else if $bound.is 'img, svg'
 						$bound.attr 'src', value
 					else
