@@ -220,8 +220,9 @@
         data = this.merge({}, data);
         path = '';
         stack = [];
-        while ((_.isObject(data) && _.keys(data).length) || (_.isArray(data) && data.length)) {
-          if (_.isArray(data) && data.length > 0) {
+        out = {};
+        while ((_.keys(data).length)) {
+          if (data.constructor === Array && data.length > 0) {
             key = data.length - 1;
             el = data.pop();
           } else {
@@ -229,16 +230,16 @@
             el = data[key];
             delete data[key];
           }
-          if (path.split(separator).length === depthLimit || typeof el !== 'object' || (el && el.nodeType)) {
-            (out = {})[path + key] = el;
+          if ((el == null) || path.split(separator).length === depthLimit || typeof el !== 'object' || el.nodeType || (typeof el === 'object' && (el.constructor === Date || el.constructor === RegExp || el.constructor === Function)) || el.constructor !== Object) {
+            out[path + key] = el;
           } else {
             if (_.keys(data).length > 0) {
-              (stack = stack || []).push([data, path]);
+              stack.push([data, path]);
             }
             data = el;
             path += key + separator;
           }
-          if (_.isObject(data) && _.keys(data).length === 0 && stack.length > 0) {
+          if (_.keys(data).length === 0 && stack.length > 0) {
             curr = stack.pop();
             data = curr[0], path = curr[1];
           }

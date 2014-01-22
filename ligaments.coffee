@@ -158,23 +158,24 @@
 			data = @merge {}, data
 			path = ''
 			stack = []
+			out = {}
 
-			while (_.isObject(data) and _.keys(data).length) or (_.isArray(data) and data.length)
-				if _.isArray(data) and data.length > 0
+			while (_.keys(data).length)
+				if data.constructor is Array and data.length > 0
 					key = data.length - 1
 					el = data.pop()
 				else
 					key = _.keys(data)[0]
 					el = data[key]
 					delete data[key]
-				if path.split(separator).length is depthLimit or typeof el isnt 'object' or (el and el.nodeType)
-					(out = {})[path + key] = el
+				if not el? or path.split(separator).length is depthLimit or typeof el isnt 'object' or el.nodeType or (typeof el is 'object' and (el.constructor is Date or el.constructor is RegExp or el.constructor is Function)) or el.constructor isnt Object
+					out[path + key] = el
 				else
 					if _.keys(data).length > 0
-						(stack = stack or []).push [data, path]
+						stack.push [data, path]
 					data = el
 					path += key + separator
-				if (_.isObject(data) and _.keys(data).length is 0 and stack.length > 0)
+				if (_.keys(data).length is 0 and stack.length > 0)
 					curr = stack.pop()
 					[data, path] = curr
 			out
