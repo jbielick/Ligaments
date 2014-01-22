@@ -90,7 +90,7 @@
         });
       },
       inject: function(model, options) {
-        var $bound, changed, eqNameSelector, nameAttribute, nameSelectors, path, value, _results;
+        var $bound, $checkbox, changed, eqNameSelector, nameAttribute, nameSelectors, path, value, _results;
         changed = options.bootstrap || model.changedAttributes();
         if (this.lockBinding) {
           return this;
@@ -114,14 +114,20 @@
             nameSelectors = '[data-bind="' + path + '"], [name="' + path + '"] ' + eqNameSelector + ', [name="' + nameAttribute + '"]';
             $bound = this.view.$(nameSelectors).not(this.target);
             if ($bound.is(':input')) {
-              if ($bound.length > 1) {
-                _results.push($bound.prop('checked', false).filter('[value="' + value + '"]').prop('checked', true));
-              } else {
-                if ($bound.is('select[multiple]')) {
-                  _results.push($bound.val(this.model.get(path)));
+              if ($bound.is(':checkbox')) {
+                if ($bound.length > 1) {
+                  $checkbox = $bound.prop('checked', false).filter('[value="' + value + '"]');
                 } else {
-                  _results.push($bound.val(value));
+                  $checkbox = $bound;
                 }
+                $bound.prop('checked', function() {
+                  return value && value.toString().toLowerCase() !== 'off' && (value.toString().toLowerCase() !== 'false');
+                });
+              }
+              if ($bound.is('select[multiple]')) {
+                _results.push($bound.val(this.model.get(path)));
+              } else {
+                _results.push($bound.val(value));
               }
             } else if ($bound.is('img, svg')) {
               _results.push($bound.attr('src', value));
@@ -222,7 +228,7 @@
         stack = [];
         out = {};
         while ((_.keys(data).length)) {
-          if (data.constructor === Array && data.length > 0) {
+          if (_.isArray(data) && data.length > 0) {
             key = data.length - 1;
             el = data.pop();
           } else {
