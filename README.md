@@ -12,7 +12,9 @@ ligaments.js binds DOM Elements to Model Attributes on the `name` attributes of 
 
 ```js
 // 	name="data[User][Profile][name]
-// or 	data-bind="data.User.Profile.name"
+// or 	
+//	data-bind="data.User.Profile.name"
+// 
 // yields
 
 {
