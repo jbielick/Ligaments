@@ -3,7 +3,7 @@ Backbone Ligaments
 
 Declarative data binding between Backbone Models and Views.
 
-Currently in development.
+Currently in beta.
 
 ###About
 
