@@ -47,7 +47,7 @@
 
 			if not @readOnly
 				$input = $ (@target = e.target)
-				key = $input.attr('name') || $input.attr('data-bind')
+				key = $input.data('bind') or $input.attr('name')
 
 				if key and key.indexOf '[' > -1
 					key = key.replace(/\[\]/g, () => '[' + @view.$('[name]').filter('[name="' + key + '"]').index($input) + ']')
@@ -109,12 +109,12 @@
 					else
 						$bound.html value
 		parseModel: (el) ->
-			$bound = $(el).find('[name], [data-ligament]')
+			$bound = $(el).find('[name], [data-bind]')
 			flat = {}
 
 			$bound.each (idx, el) => 
 				$this = $(el)
-				name = $this.attr('name') || $this.attr('data-bind')
+				name = $this.data('bind') or $this.attr('name')
 				name = name.replace /\[\]/g, () ->
 					'['+$bound.filter('[name="'+name+'"], [data-bind="'+name+'"]').index($this) + ']'
 
