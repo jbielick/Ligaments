@@ -8,7 +8,23 @@ Currently in beta.
 ###About
 
 ligaments.js binds DOM Elements to Model Attributes on the `name` attributes of elements within the view. 
-`Model.changedAttributes()` are injected on each change event. Any `change` or `input` event from an input, textarea, or select element within the bound view will set the new data to the bound model and fire a `change` event.
+`Model.changedAttributes()` are injected on each change event. Any `change` or `input` event from an element with a `name` attribute or `data-bind` attribute within the bound view will set the new data to the bound model and fire a `change` event. The data will be set at the path indicated in the `name` or `data-bind` attribute in dot-notation or bracket-notation.
+
+```js
+// name="data[User][Profile][name]
+// yields
+
+{
+	data: {
+		User: {
+			Profile: {
+				name: '.val() or .text()'
+			}
+		}
+	}
+}
+
+```
 
 ###Usage:
 
