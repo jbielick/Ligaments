@@ -41,17 +41,17 @@
         this.view.listenTo(this.model, 'change', inject);
         if (!this.readOnly) {
           _.extend(this.view.events || (this.view.events = {}), {
-            'change *[name]': ingest,
-            'input *[name]': ingest,
+            'change *[name]:not([data-bind])': ingest,
+            'input *[name]:not([data]bind])': ingest,
             'change *[data-bind]': ingest,
             'input *[data-bind]': ingest
           });
-          return this.view.delegateEvents();
+          return this.view.delegateEvents(this.view.events);
         }
       },
       ensureArguments: function(options) {
         if (!options.view || !options.model) {
-          throw new Error('You must provide an instance of a Backbone view and model');
+          return console.warn('You must provide an instance of a Backbone view and model');
         }
       },
       ingest: function(e) {
@@ -60,7 +60,7 @@
         _this = this;
         if (!this.readOnly) {
           $input = $((this.target = e.target));
-          key = $input.attr('name') || $input.attr('data-bind');
+          key = $input.data('bind') || $input.attr('name');
           if (key && key.indexOf('[' > -1)) {
             key = key.replace(/\[\]/g, function() {
               return '[' + _this.view.$('[name]').filter('[name="' + key + '"]').index($input) + ']';
@@ -143,14 +143,14 @@
       parseModel: function(el) {
         var $bound, flat,
           _this = this;
-        $bound = $(el).find('[name], [data-ligament]');
+        $bound = $(el).find('[name], [data-bind]');
         flat = {};
         $bound.each(function(idx, el) {
           var $this, name;
           $this = $(el);
-          name = $this.attr('name') || $this.attr('data-bind');
+          name = $this.data('bind') || $this.attr('name');
           name = name.replace(/\[\]/g, function() {
-            return '[' + $bound.filter('[name="' + name + '"], [data-bind="' + name + '"]').index($this) + ']';
+            return '[' + $bound.filter('[data-bind="' + name + '"], [name="' + name + '"]').index($this) + ']';
           });
           if (typeof _this.getVal($this) !== 'undefined') {
             return flat[name] = _this.getVal($this);

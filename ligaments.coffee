@@ -22,7 +22,6 @@
 		@bootstrap()
 		@createBindings()
 		@model.set(@parseModel(@view.$el)) if not @readOnly
-		# @model.trigger 'change', @model, @flatten(@model.toJSON())
 
 	ligamentOptions = ['view', 'model', 'readOnly', 'bindings']
 
@@ -34,14 +33,14 @@
 			@view.listenTo @model, 'change', inject
 			if not @readOnly
 				_.extend (@view.events || (@view.events = {})), 
-					'change *[name]'		: ingest,
-					'input *[name]'			: ingest,
-					'change *[data-bind]' 	: ingest,
-					'input *[data-bind]' 	: ingest
-				@view.delegateEvents()
+					'change *[name]:not([data-bind])'			: ingest,
+					'input *[name]:not([data]bind])'			: ingest,
+					'change *[data-bind]' 						: ingest,
+					'input *[data-bind]' 						: ingest
+				@view.delegateEvents(@view.events)
 		ensureArguments: (options) ->
 			if not options.view or not options.model
-				throw new Error 'You must provide an instance of a Backbone view and model'
+				console.warn 'You must provide an instance of a Backbone view and model'
 		ingest: (e) ->
 			_this = this
 
@@ -116,7 +115,7 @@
 				$this = $(el)
 				name = $this.data('bind') or $this.attr('name')
 				name = name.replace /\[\]/g, () ->
-					'['+$bound.filter('[name="'+name+'"], [data-bind="'+name+'"]').index($this) + ']'
+					'['+$bound.filter('[data-bind="'+name+'"], [name="'+name+'"]').index($this) + ']'
 
 				if (typeof @getVal($this) isnt 'undefined')
 					flat[name] = @getVal($this);
