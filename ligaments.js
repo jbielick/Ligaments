@@ -42,7 +42,7 @@
         if (!this.readOnly) {
           _.extend(this.view.events || (this.view.events = {}), {
             'change *[name]:not([data-bind])': ingest,
-            'input *[name]:not([data]bind])': ingest,
+            'input *[name]:not([data-bind])': ingest,
             'change *[data-bind]': ingest,
             'input *[data-bind]': ingest
           });

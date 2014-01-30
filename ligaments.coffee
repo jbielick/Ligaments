@@ -34,7 +34,7 @@
 			if not @readOnly
 				_.extend (@view.events || (@view.events = {})), 
 					'change *[name]:not([data-bind])'			: ingest,
-					'input *[name]:not([data]bind])'			: ingest,
+					'input *[name]:not([data-bind])'			: ingest,
 					'change *[data-bind]' 						: ingest,
 					'input *[data-bind]' 						: ingest
 				@view.delegateEvents(@view.events)
