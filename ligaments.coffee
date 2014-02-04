@@ -19,9 +19,9 @@
 		options || (options = {})
 		@ensureArguments.call(this, options)
 		_.extend @, _.pick(options, ligamentOptions)
-		@bootstrap()
+		@bootstrap() unless options.bootstrap is false
 		@createBindings()
-		@model.set(@parseModel(@view.$el)) if not @readOnly
+		@model.set(@parseModel(@view.$el)) if not @readOnly and options.ingest is not false
 
 	ligamentOptions = ['view', 'model', 'readOnly', 'bindings']
 
@@ -79,16 +79,7 @@
 
 			for own path, value of changed
 				if not @binds or _.indexOf(@binds, path) > -1
-					if /[0-9]+/.test path.split('').pop()
-						path = path.split('.')
-						path.pop()
-						path = path.join('.')
-
-					nameAttribute = @dotToBracketNotation path
-					eqNameSelector = nameAttribute.replace(/(.*\[)([0-9]+)?(\].*)/g, '[name="$1$3"]:eq($2)')
-					nameSelectors = '[data-bind="'+path+'"], [name="'+path+'"] '+eqNameSelector+', [name="'+nameAttribute+'"]'
-
-					$bound = @view.$(nameSelectors).not(@target)
+					$bound = @getBound(path)
 
 					if $bound.is ':input'
 						if $bound.is ':checkbox'
@@ -121,6 +112,17 @@
 					flat[name] = @getVal($this);
 
 			@expand flat
+		getBound: (path) ->
+			if /[0-9]+/.test path.split('').pop()
+				path = path.split('.')
+				path.pop()
+				path = path.join('.')
+
+			nameAttribute = @dotToBracketNotation path
+			eqNameSelector = nameAttribute.replace(/(.*\[)([0-9]+)?(\].*)/g, '[name="$1$3"]:eq($2)')
+			nameSelectors = '[data-bind="'+path+'"], [name="'+path+'"] '+eqNameSelector+', [name="'+nameAttribute+'"]'
+
+			@view.$(nameSelectors).not(@target)
 		getVal: (input) ->
 			$input = $(input)
 			if $input.is(':input')

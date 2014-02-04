@@ -26,9 +26,11 @@
       options || (options = {});
       this.ensureArguments.call(this, options);
       _.extend(this, _.pick(options, ligamentOptions));
-      this.bootstrap();
+      if (options.bootstrap !== false) {
+        this.bootstrap();
+      }
       this.createBindings();
-      if (!this.readOnly) {
+      if (!this.readOnly && options.ingest === !false) {
         return this.model.set(this.parseModel(this.view.$el));
       }
     };
@@ -90,7 +92,7 @@
         });
       },
       inject: function(model, options) {
-        var $bound, $checkbox, changed, eqNameSelector, nameAttribute, nameSelectors, path, value, _results;
+        var $bound, $checkbox, changed, path, value, _results;
         changed = options.bootstrap || model.changedAttributes();
         if (this.lockBinding) {
           return this;
@@ -104,15 +106,7 @@
           if (!__hasProp.call(changed, path)) continue;
           value = changed[path];
           if (!this.binds || _.indexOf(this.binds, path) > -1) {
-            if (/[0-9]+/.test(path.split('').pop())) {
-              path = path.split('.');
-              path.pop();
-              path = path.join('.');
-            }
-            nameAttribute = this.dotToBracketNotation(path);
-            eqNameSelector = nameAttribute.replace(/(.*\[)([0-9]+)?(\].*)/g, '[name="$1$3"]:eq($2)');
-            nameSelectors = '[data-bind="' + path + '"], [name="' + path + '"] ' + eqNameSelector + ', [name="' + nameAttribute + '"]';
-            $bound = this.view.$(nameSelectors).not(this.target);
+            $bound = this.getBound(path);
             if ($bound.is(':input')) {
               if ($bound.is(':checkbox')) {
                 if ($bound.length > 1) {
@@ -157,6 +151,18 @@
           }
         });
         return this.expand(flat);
+      },
+      getBound: function(path) {
+        var eqNameSelector, nameAttribute, nameSelectors;
+        if (/[0-9]+/.test(path.split('').pop())) {
+          path = path.split('.');
+          path.pop();
+          path = path.join('.');
+        }
+        nameAttribute = this.dotToBracketNotation(path);
+        eqNameSelector = nameAttribute.replace(/(.*\[)([0-9]+)?(\].*)/g, '[name="$1$3"]:eq($2)');
+        nameSelectors = '[data-bind="' + path + '"], [name="' + path + '"] ' + eqNameSelector + ', [name="' + nameAttribute + '"]';
+        return this.view.$(nameSelectors).not(this.target);
       },
       getVal: function(input) {
         var $input;
