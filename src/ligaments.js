@@ -29,8 +29,8 @@
         this.bootstrap();
       }
       this.createBindings();
-      if (!this.readOnly && options.ingest === !false) {
-        return this.model.set(this.parseModel(this.view.$el));
+      if (!this.readOnly && options.ingest !== false) {
+        return this.model.set(this.parseModel());
       }
     };
     ligamentOptions = ['view', 'model', 'readOnly', 'bindings'];
@@ -114,11 +114,10 @@
                 } else {
                   $checkbox = $bound;
                 }
-                $bound.prop('checked', function() {
+                _results.push($bound.prop('checked', function() {
                   return value && value.toString().toLowerCase() !== 'off' && (value.toString().toLowerCase() !== 'false');
-                });
-              }
-              if ($bound.is('select[multiple]')) {
+                }));
+              } else if ($bound.is('select[multiple]')) {
                 _results.push($bound.val(this.model.get(path)));
               } else {
                 _results.push($bound.val(value));
@@ -134,9 +133,9 @@
         }
         return _results;
       },
-      parseModel: function(el) {
+      parseModel: function() {
         var $bound, flat;
-        $bound = $(el).find('[name], [data-bind]');
+        $bound = this.view.$el.find('[name], [data-bind]');
         flat = {};
         $bound.each((function(_this) {
           return function(idx, el) {

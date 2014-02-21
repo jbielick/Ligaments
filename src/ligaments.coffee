@@ -21,7 +21,7 @@
 		_.extend @, _.pick(options, ligamentOptions)
 		@bootstrap() unless options.bootstrap is false
 		@createBindings()
-		@model.set(@parseModel(@view.$el)) if not @readOnly and options.ingest is not false
+		@model.set(@parseModel()) if not @readOnly and options.ingest isnt false
 
 	ligamentOptions = ['view', 'model', 'readOnly', 'bindings']
 
@@ -90,7 +90,7 @@
 							$bound.prop('checked', () -> 
 								return value and value.toString().toLowerCase() isnt 'off' and (value.toString().toLowerCase() isnt 'false')
 							)
-						if $bound.is 'select[multiple]'
+						else if $bound.is 'select[multiple]'
 							$bound.val @model.get path
 						else
 							$bound.val value
@@ -98,8 +98,8 @@
 						$bound.attr 'src', value
 					else
 						$bound.html value
-		parseModel: (el) ->
-			$bound = $(el).find('[name], [data-bind]')
+		parseModel: () ->
+			$bound = @view.$el.find('[name], [data-bind]')
 			flat = {}
 
 			$bound.each (idx, el) => 

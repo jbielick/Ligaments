@@ -90,7 +90,7 @@
 			baseUrl: '../lib',
 			paths: {
 				backboneRelational: 'backbone-relational',
-				ligaments: '../ligaments'
+				ligaments: '../dist/ligaments'
 			},
 			shim: {
 				underscore: {
@@ -115,7 +115,6 @@
 			model = new ModelClass();
 			view = new ViewClass({el: 'form'});
 			var ligament = new Backbone.Ligaments({model: model, view: view});
-			debugger
 			return [model, view];
 		}
 

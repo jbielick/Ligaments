@@ -45,6 +45,6 @@ module.exports = function(grunt) {
 
 	grunt.registerTask('test', ['qunit']);
 
-	grunt.registerTask('build', ['coffee:compile', 'uglify:main', 'copy:dist', 'qunit']);
+	grunt.registerTask('build', ['coffee:compile', 'uglify:main', 'copy:dist']);
 
 }
