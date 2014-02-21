@@ -114,7 +114,8 @@
 			var ModelClass = Backbone.DeepModel.extend();
 			model = new ModelClass();
 			view = new ViewClass({el: 'form'});
-			new Backbone.Ligaments({model: model, view: view});
+			var ligament = new Backbone.Ligaments({model: model, view: view});
+			debugger
 			return [model, view];
 		}
 
@@ -122,7 +123,7 @@
 
 
 			module('parseModel');
-			test('initial collect', function() {
+			test('parse Model', function() {
 				var vars = setup();
 				var model = vars[0];
 				var view = vars[1];
@@ -144,7 +145,7 @@
 					}
 				};
 
-				deepEqual(model.toJSON(), data, 'collects the right data');
+				deepEqual(model.toJSON(), data, 'ingests the right data');
 			});
 
 		});
