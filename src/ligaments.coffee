@@ -81,23 +81,24 @@
 				if not @binds or _.indexOf(@binds, path) > -1
 					$bound = @getBound(path)
 
-					if $bound.is ':input'
-						if $bound.is ':checkbox'
-							if $bound.length > 1
-								$checkbox = $bound.prop('checked', false).filter('[value="'+value+'"]')
+					if $bound.length
+						if $bound.is ':input'
+							if $bound.is ':checkbox'
+								if $bound.length > 1
+									$checkbox = $bound.prop('checked', false).filter('[value="'+value+'"]')
+								else
+									$checkbox = $bound
+								$bound.prop('checked', () -> 
+									return value and value.toString().toLowerCase() isnt 'off' and (value.toString().toLowerCase() isnt 'false')
+								)
+							else if $bound.is 'select[multiple]'
+								$bound.val @model.get path
 							else
-								$checkbox = $bound
-							$bound.prop('checked', () -> 
-								return value and value.toString().toLowerCase() isnt 'off' and (value.toString().toLowerCase() isnt 'false')
-							)
-						else if $bound.is 'select[multiple]'
-							$bound.val @model.get path
+								$bound.val value
+						else if $bound.is 'img, svg'
+							$bound.attr 'src', value
 						else
-							$bound.val value
-					else if $bound.is 'img, svg'
-						$bound.attr 'src', value
-					else
-						$bound.html value
+							$bound.html value
 		parseModel: () ->
 			$bound = @view.$el.find('[name], [data-bind]')
 			flat = {}
