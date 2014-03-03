@@ -82,7 +82,7 @@
 
 					if $bound.length
 						if $bound.is ':input'
-							if $bound.is ':checkbox'
+							if $bound.is ':checkbox' or $bound.is ':radio'
 								if $bound.length > 1
 									$checkbox = $bound.prop('checked', false).filter('[value="'+value+'"]')
 								else
