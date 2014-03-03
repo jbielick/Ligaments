@@ -6,7 +6,6 @@
  #  License: GNU GENERAL PUBLIC LICENSE
  # 
 ###
-
 ((factory) -> 
 	if typeof define is 'function' and define.amd
 		define ['underscore', 'backbone'], factory
@@ -67,7 +66,7 @@
 
 				delete @target
 		bootstrap: () ->
-			@inject @model, bootstrap: @flatten @model.toJSON()
+			@inject @model, bootstrap: @model.toJSON()
 		inject: (model, options) ->
 			changed = options.bootstrap or model.changedAttributes()
 
@@ -167,7 +166,7 @@
 			stack = []
 			out = {}
 
-			while (_.keys(data).length)
+			while (_.keys(data).length > 0)
 				if _.isArray(data) and data.length > 0
 					key = data.length - 1
 					el = data.pop()
@@ -175,7 +174,7 @@
 					key = _.keys(data)[0]
 					el = data[key]
 					delete data[key]
-				if not el? or path.split(separator).length is depthLimit or typeof el isnt 'object' or el.nodeType or (typeof el is 'object' and (el.constructor is Date or el.constructor is RegExp or el.constructor is Function)) or el.constructor isnt Object
+				if not el? or path.split(separator).length is depthLimit or typeof el isnt 'object' or el.nodeType or (typeof el is 'object' and (el.constructor is Date or el.constructor is RegExp or el.constructor is Function))
 					out[path + key] = el
 				else
 					if _.keys(data).length > 0

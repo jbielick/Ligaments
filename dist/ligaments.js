@@ -88,7 +88,7 @@
       },
       bootstrap: function() {
         return this.inject(this.model, {
-          bootstrap: this.flatten(this.model.toJSON())
+          bootstrap: this.model.toJSON()
         });
       },
       inject: function(model, options) {
@@ -237,7 +237,7 @@
         path = '';
         stack = [];
         out = {};
-        while ((_.keys(data).length)) {
+        while (_.keys(data).length > 0) {
           if (_.isArray(data) && data.length > 0) {
             key = data.length - 1;
             el = data.pop();
@@ -246,7 +246,7 @@
             el = data[key];
             delete data[key];
           }
-          if ((el == null) || path.split(separator).length === depthLimit || typeof el !== 'object' || el.nodeType || (typeof el === 'object' && (el.constructor === Date || el.constructor === RegExp || el.constructor === Function)) || el.constructor !== Object) {
+          if ((el == null) || path.split(separator).length === depthLimit || typeof el !== 'object' || el.nodeType || (typeof el === 'object' && (el.constructor === Date || el.constructor === RegExp || el.constructor === Function))) {
             out[path + key] = el;
           } else {
             if (_.keys(data).length > 0) {

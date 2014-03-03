@@ -111,15 +111,52 @@
 
 		function setup() {
 			var ViewClass = Backbone.View.extend();
-			var ModelClass = Backbone.DeepModel.extend();
+			var ModelClass = Backbone.DeepModel.extend({defaults: {data: {User: [{img: 'defaultImageSrc'}]}}});
 			model = new ModelClass();
 			view = new ViewClass({el: 'form'});
 			var ligament = new Backbone.Ligaments({model: model, view: view});
 			return [model, view];
 		}
 
+		function getData() {
+			return {
+				"data": {
+					"User": [{
+						"name": "Josh",
+						"group_id": "1",
+						"tall": "1",
+						"img": "defaultImageSrc",
+						"preference": "3",
+						"likes": null,
+						"tags": [
+							"Cool",
+							"Smart"
+						]
+					}]
+				}
+			};
+		}
+
 		require(['backbone', 'ligaments', 'backbone-deepmodel'], function(Backbone) {
 
+
+			module('Flatten');
+
+			test('Flatten complex object', function() {
+				var data = getData();
+				var flat = Backbone.Ligaments.prototype.flatten(data);
+
+				deepEqual(flat, {
+					'data.User.0.name': 'Josh',
+					'data.User.0.group_id': '1',
+					'data.User.0.tall': '1',
+					'data.User.0.img': 'defaultImageSrc',
+					'data.User.0.preference': '3',
+					'data.User.0.likes': null,
+					'data.User.0.tags.0': 'Cool',
+					'data.User.0.tags.1': 'Smart'
+				}, 'Flattens');
+			});
 
 			module('parseModel');
 			test('parse Model', function() {
@@ -127,22 +164,7 @@
 				var model = vars[0];
 				var view = vars[1];
 
-				var data = {
-					"data": {
-						"User": [{
-							"name": "Josh",
-							"group_id": "1",
-							"tall": "1",
-							"img": "",
-							"preference": "3",
-							"likes": null,
-							"tags": [
-								"Cool",
-								"Smart"
-							]
-						}]
-					}
-				};
+				var data = getData();
 
 				deepEqual(model.toJSON(), data, 'ingests the right data');
 			});
