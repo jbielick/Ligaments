@@ -84,10 +84,10 @@
 						if $bound.is ':input'
 							if $bound.is ':checkbox' or $bound.is ':radio'
 								if $bound.length > 1
-									$checkbox = $bound.prop('checked', false).filter('[value="'+value+'"]')
+									$boundTarget = $bound.prop('checked', false).filter('[value="'+value+'"]')
 								else
-									$checkbox = $bound
-								$bound.prop('checked', () -> 
+									$boundTarget = $bound
+								$boundTarget.prop('checked', () -> 
 									return value and value.toString().toLowerCase() isnt 'off' and (value.toString().toLowerCase() isnt 'false')
 								)
 							else if $bound.is 'select[multiple]'

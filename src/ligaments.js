@@ -92,7 +92,7 @@
         });
       },
       inject: function(model, options) {
-        var $bound, $checkbox, changed, path, value, _results;
+        var $bound, $boundTarget, changed, path, value, _results;
         changed = options.bootstrap || model.changedAttributes();
         if (this.lockBinding) {
           return this;
@@ -111,11 +111,11 @@
               if ($bound.is(':input')) {
                 if ($bound.is(':checkbox' || $bound.is(':radio'))) {
                   if ($bound.length > 1) {
-                    $checkbox = $bound.prop('checked', false).filter('[value="' + value + '"]');
+                    $boundTarget = $bound.prop('checked', false).filter('[value="' + value + '"]');
                   } else {
-                    $checkbox = $bound;
+                    $boundTarget = $bound;
                   }
-                  _results.push($bound.prop('checked', function() {
+                  _results.push($boundTarget.prop('checked', function() {
                     return value && value.toString().toLowerCase() !== 'off' && (value.toString().toLowerCase() !== 'false');
                   }));
                 } else if ($bound.is('select[multiple]')) {
