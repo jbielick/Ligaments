@@ -1,0 +1,28 @@
+{
+  "name": "Ligaments",
+  "version": "0.5.0",
+  "homepage": "https://github.com/jbielick/BackboneBinding",
+  "authors": [
+    "Josh Bielick <jbielick@gmail.com>"
+  ],
+  "description": "Stupid-simple Model-View Binding for Backbone.js",
+  "main": "dist/ligaments.js",
+  "keywords": [
+    "ligaments",
+    "model-view",
+    "binding",
+    "two-way",
+    "binding",
+    "view-model",
+    "backbone.js",
+    "backbone"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
