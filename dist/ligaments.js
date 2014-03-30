@@ -30,7 +30,9 @@
       }
       this.createBindings();
       if (!this.readOnly && options.ingest !== false) {
-        return this.model.set(this.parseModel());
+        return this.model.set(this.parseModel(), {
+          silent: true
+        });
       }
     };
     ligamentOptions = ['view', 'model', 'readOnly', 'bindings'];

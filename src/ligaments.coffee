@@ -20,7 +20,7 @@
 		_.extend @, _.pick(options, ligamentOptions)
 		@bootstrap() unless options.bootstrap is false
 		@createBindings()
-		@model.set(@parseModel()) if not @readOnly and options.ingest isnt false
+		@model.set(@parseModel(), silent: true) if not @readOnly and options.ingest isnt false
 
 	ligamentOptions = ['view', 'model', 'readOnly', 'bindings']
 

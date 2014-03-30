@@ -169,6 +169,27 @@
 				deepEqual(model.toJSON(), data, 'ingests the right data');
 			});
 
+			module('beforeInject');
+			test('beforeInject allows modification of impending injected attributes without changing the model attributes', function() {
+				var model = new (Backbone.DeepModel.extend({})),
+						view = new (Backbone.View.extend({
+							el: 'form',
+							beforeInject: function(model, attrs) {
+								if (attrs['data.User.0.name']) {
+									attrs['data.User.0.name'] = 'injectedModification';
+								}
+							}
+						})),
+						ligament = new Backbone.Ligaments({model: model, view: view});
+
+				model.set('data.User.0.name', 'JoshTest');
+
+				model.set('data.User.0.name', 'JoshTest2');
+
+				equal(model.get('data.User.0.name'), 'JoshTest2');
+
+			});
+
 		});
 	</script>
 </body>
