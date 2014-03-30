@@ -13,83 +13,91 @@
 		factory _, Backbone
 )( (_, Backbone) ->
 
-	Ligaments = Backbone.Ligaments = (options) ->
-		@cid = _.uniqueId('ligament');
-		options || (options = {})
-		@ensureArguments.call(this, options)
-		_.extend @, _.pick(options, ligamentOptions)
-		@bootstrap() unless options.bootstrap is false
-		@createBindings()
-		@model.set(@parseModel(), silent: true) if not @readOnly and options.ingest isnt false
+	class Ligaments
 
-	ligamentOptions = ['view', 'model', 'readOnly', 'bindings']
+		constructor: (options = {}) ->
+			@cid = _.uniqueId 'ligament'
+			@ensureArguments.apply this, arguments
+			{ @view, @model, @readOnly, @bindings, @blacklist, @whitelist } = options
+			@createBindings()
+			@bootstrapView() unless options.inject is false
+			@model.set(@parseModel(), silent: true) unless @readOnly or not options.ingest
+			return this
 
-	_.extend Ligaments.prototype, 
 		createBindings: () ->
-			ingest = _.bind @ingest, @
-			inject = _.bind @inject, @
+			_.bindAll @, 'ingest', 'inject'
 
-			@view.listenTo @model, 'change', inject
-			if not @readOnly
+			@view.listenTo @model, 'change', @inject
+
+			unless @readOnly
 				_.extend (@view.events || (@view.events = {})), 
-					'change *[name]:not([data-bind])'			: ingest,
-					'input *[name]:not([data-bind])'			: ingest,
-					'change *[data-bind]' 						: ingest,
-					'input *[data-bind]' 						: ingest
+					'change *[name]:not([data-bind])'			: @ingest,
+					'input *[name]:not([data-bind])'			: @ingest,
+					'change *[data-bind]' 								: @ingest,
+					'input *[data-bind]' 									: @ingest
 				@view.delegateEvents(@view.events)
-		ensureArguments: (options) ->
-			if not options.view or not options.model
-				console.warn 'You must provide an instance of a Backbone view and model'
+
+
+		ensureArguments: () ->
+			args = [].slice.call arguments
+			unless args.length or args[0].view or args[0].model
+				console.warn 'You must provide an instance of a Backbone View and Model'
+
+
 		ingest: (e) ->
-			_this = this
+			_this = @
 
-			if not @readOnly
-				$input = $ (@target = e.target)
-				key = $input.data('bind') or $input.attr('name')
+			unless @readOnly
+				unless @blacklist and not path in @blacklist or @whitelist? and path in @whitelist
+					$input = $(@target = e.currentTarget)
+					path = $input.data('bind') || $input.attr('name')
 
-				if key and key.indexOf '[' > -1
-					key = key.replace(/\[\]/g, () => '[' + @view.$('[name]').filter('[name="' + key + '"]').index($input) + ']')
-					key = @dotToBracketNotation key, true
+					if path and path.indexOf '[' > -1
+						path = path.replace(/\[\]/g, () => '[' + @view.$('[name]').filter("[name=\"#{path}\"]").index($input) + ']')
+						path = @dotToBracketNotation path, true
 
-				value = @getVal($input)
+					value = @getVal $input, path
 
-				if $input.is 'select[multiple]'
-					@model.unset key
+					if $input.is 'select[multiple]'
+						@model.unset path
 
-				(data = {})[key] = value
+					(data = {})[path] = value
 
-				data = @expand data
+					data = @expand data
 
-				(@model.parse data) if @parse and _.isFunction @model.parse
+					@model.parse data if @parse and _.isFunction @model.parse
 
-				if not value? then @model.unset key else @model.set data
+					unless value? then @model.unset path else @model.set data
 
-				delete @target
-		bootstrap: () ->
-			@inject @model, bootstrap: @model.toJSON()
+					delete @target
+
+		bootstrapView: () ->
+			@inject @model, bootstrapData: @model.toJSON()
+
+
 		inject: (model, options) ->
-			changed = options.bootstrap or model.changedAttributes()
+			data = options.bootstrapData || model.changedAttributes()
 
-			if @lockBinding then return @
+			return @ if @lockBinding
 
-			if _.isFunction @view.beforeInject then @view.beforeInject model, changed
+			data = @flatten data
 
-			changed = @flatten changed
+			@view.beforeInject model, data if _.isFunction @view.beforeInject
 
-			for own path, value of changed
-				if not @binds or _.indexOf(@binds, path) > -1
-					$bound = @getBound(path)
+			for own path, value of data
+				unless (@blacklist? and not path in @blacklist) or (@whitelist? and path in @whitelist)
+					$bound = @getBound path
 
 					if $bound.length
 						if $bound.is ':input'
 							if $bound.is(':checkbox') or $bound.is(':radio')
 								if $bound.length > 1
-									$boundTarget = $bound.prop('checked', false).filter('[value="'+value+'"]')
+									$boundTarget = $bound.prop('checked', false).filter("[value=\"#{value}\"]")
 								else
 									$boundTarget = $bound
-								$boundTarget.prop('checked', () -> 
-									return value and value.toString().toLowerCase() isnt 'off' and (value.toString().toLowerCase() isnt 'false')
-								)
+								$boundTarget.prop 'checked', () ->
+									lowerCaseString = value.toString().toLowerCase()
+									value and lowerCaseString isnt 'off' and lowerCaseString isnt 'false' and lowerCaseString isnt 'no'
 							else if $bound.is 'select[multiple]'
 								$bound.val @model.get path
 							else
@@ -98,20 +106,24 @@
 							$bound.attr 'src', value
 						else
 							$bound.html value
+
+
 		parseModel: () ->
-			$bound = @view.$el.find('[name], [data-bind]')
+			$bound = @view.$ '[data-bind], [name]'
 			flat = {}
 
 			$bound.each (idx, el) => 
-				$this = $(el)
-				name = $this.data('bind') or $this.attr('name')
-				name = name.replace /\[\]/g, () ->
-					'['+$bound.filter('[data-bind="'+name+'"], [name="'+name+'"]').index($this) + ']'
+				$el = $(el)
+				path = $el.data('bind') or $el.attr('name')
+				path = path.replace /\[\]/g, () ->
+					'[' + $bound.filter("[data-bind=\"#{path}\"], [name=\"#{path}\"]").index($el) + ']'
 
-				if (typeof @getVal($this) isnt 'undefined')
-					flat[name] = @getVal($this);
+				if (value = @getVal($el, path))?
+					flat[path] = value
 
 			@expand flat
+
+
 		getBound: (path) ->
 			if /[0-9]+/.test path.split('').pop()
 				path = path.split('.')
@@ -120,18 +132,27 @@
 
 			nameAttribute = @dotToBracketNotation path
 			eqNameSelector = nameAttribute.replace(/(.*\[)([0-9]+)?(\].*)/g, '[name="$1$3"]:eq($2)')
-			nameSelectors = '[data-bind="'+path+'"], [name="'+path+'"] '+eqNameSelector+', [name="'+nameAttribute+'"]'
+			nameSelectors = "[data-bind=\"#{path}\"], [name=\"#{path}\"] #{eqNameSelector}, [name=\"#{nameAttribute}\"]"
 
 			@view.$(nameSelectors).not(@target)
-		getVal: (input) ->
+
+
+		getVal: (input, path = '*') ->
 			$input = $(input)
 			if $input.is(':input')
 				if (not $input.is(':checkbox') and not $input.is(':radio')) or $input.prop('checked')
-					$input.val()
+					 value = $input.val()
 				else
-					undefined
+					value = undefined
 			else
-				$input.text()
+				value = $input.text()
+
+			if @bindings?[path]?.cast? && _.isFunction @bindings[path].cast
+				value = @bindings[path].cast.call this, value
+
+			value
+
+
 		matchToken: (key, token) ->
 			if token is '{n}'
 				Number(key) % 1 is 0
@@ -140,6 +161,8 @@
 			if parseInt(token, 10) % 1 is 0
 				key is parseInt token, 10
 			key is token
+
+
 		expand: (flat) ->
 			if (flat.constructor isnt Array)
 				flat = [flat]
@@ -160,6 +183,8 @@
 						child = parent
 					@merge((out = out || out = {}), child)
 			out
+
+
 		flatten: (data, separator = '.', depthLimit = false) ->
 			data = @merge {}, data
 			path = ''
@@ -174,8 +199,12 @@
 					key = _.keys(data)[0]
 					el = data[key]
 					delete data[key]
-				if not el? or path.split(separator).length is depthLimit or typeof el isnt 'object' or el.nodeType or (typeof el is 'object' and (el.constructor is Date or el.constructor is RegExp or el.constructor is Function))
-					out[path + key] = el
+				if not el? or 
+					path.split(separator).length is depthLimit or
+					typeof el isnt 'object' or
+					el.nodeType or
+					(typeof el is 'object' and (el.constructor is Date or el.constructor is RegExp or el.constructor is Function))
+						out[path + key] = el
 				else
 					if _.keys(data).length > 0
 						stack.push [data, path]
@@ -185,6 +214,8 @@
 					curr = stack.pop()
 					[data, path] = curr
 			out
+
+
 		merge: (objects...) ->
 			out = objects.shift()
 			for object in objects
@@ -194,6 +225,8 @@
 					else
 						out[key] = value
 			out
+
+
 		dotToBracketNotation: (path, reverse = false) ->
 			if not path
 				throw new TypeError 'Not Enough Arguments'
@@ -201,6 +234,8 @@
 				path.replace(/\]/g, '').split('[').join('.')
 			else
 				path.replace(/([\w]+)\.?/g, '[$1]').replace(/^\[(\w+)\]/, '$1')
+
+
 		tokenize: (path) -> 
 			if path.indexOf('[') is -1
 				path.split '.'
@@ -208,4 +243,6 @@
 				_.map path.split('['), (v) ->
 					v = v.replace /\]/, ''
 					if v is '' then '{n}' else v
+
+	Backbone.Ligament = Backbone.Ligaments = Ligaments
 )

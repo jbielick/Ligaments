@@ -20,6 +20,12 @@
 				<table>
 					<tr>
 						<td>
+							<label>name:</label>
+							<kbd type="text" data-bind="name" size="30">name</kbd>
+						</td>
+					</tr>
+					<tr>
+						<td>
 							<label>User 0 Name:</label>
 							<input type="text" name="data[User][0][name]" value="Josh">
 						</td>
@@ -114,12 +120,13 @@
 			var ModelClass = Backbone.DeepModel.extend({defaults: {data: {User: [{img: 'defaultImageSrc'}]}}});
 			model = new ModelClass();
 			view = new ViewClass({el: 'form'});
-			var ligament = new Backbone.Ligaments({model: model, view: view});
+			var ligament = new Backbone.Ligaments({model: model, view: view, ingest: true});
 			return [model, view];
 		}
 
 		function getData() {
 			return {
+				"name" : "name",
 				"data": {
 					"User": [{
 						"name": "Josh",
@@ -127,7 +134,6 @@
 						"tall": "1",
 						"img": "defaultImageSrc",
 						"preference": "3",
-						"likes": null,
 						"tags": [
 							"Cool",
 							"Smart"
@@ -152,9 +158,9 @@
 					'data.User.0.tall': '1',
 					'data.User.0.img': 'defaultImageSrc',
 					'data.User.0.preference': '3',
-					'data.User.0.likes': null,
 					'data.User.0.tags.0': 'Cool',
-					'data.User.0.tags.1': 'Smart'
+					'data.User.0.tags.1': 'Smart',
+					'name' : 'name'
 				}, 'Flattens');
 			});
 
@@ -166,12 +172,12 @@
 
 				var data = getData();
 
-				deepEqual(model.toJSON(), data, 'ingests the right data');
+				deepEqual(model.toJSON(), data, 'ingests data from view on construction if ingest option is set to true');
 			});
 
 			module('beforeInject');
-			test('beforeInject allows modification of impending injected attributes without changing the model attributes', function() {
-				var model = new (Backbone.DeepModel.extend({})),
+			test('DeepModel beforeInject allows modification of impending injected attributes', function() {
+				var model = new (Backbone.Model.extend({})),
 						view = new (Backbone.View.extend({
 							el: 'form',
 							beforeInject: function(model, attrs) {
@@ -189,6 +195,29 @@
 				equal(model.get('data.User.0.name'), 'JoshTest2');
 
 			});
+
+			test('beforeInject allows modification of impending injected attributes without changing the model attributes', function() {
+				var model = new (Backbone.Model.extend())({name: 'Original Model Value'}),
+						view = new (Backbone.View.extend({
+							el: 'form',
+							beforeInject: function(model, attrs) {
+								if (attrs.name) {
+									attrs.name = 'injectedModification of ' + attrs.name;
+								}
+							}
+						})),
+						ligament = new Backbone.Ligaments({
+							model: model,
+							view: view
+						});
+
+				equal($('[data-bind="name"]').text(), 'injectedModification of Original Model Value', 'Form value has correct beforeInject modified value.');
+
+				equal(model.get('name'), 'Original Model Value', 'Model attributes remain unchanged.');
+
+			});
+
+			// test('define binding')
 
 		});
 	</script>

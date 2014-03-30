@@ -9,7 +9,8 @@
  */
 
 (function() {
-  var __hasProp = {}.hasOwnProperty,
+  var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; },
+    __hasProp = {}.hasOwnProperty,
     __slice = [].slice;
 
   (function(factory) {
@@ -19,106 +20,117 @@
       return factory(_, Backbone);
     }
   })(function(_, Backbone) {
-    var Ligaments, ligamentOptions;
-    Ligaments = Backbone.Ligaments = function(options) {
-      this.cid = _.uniqueId('ligament');
-      options || (options = {});
-      this.ensureArguments.call(this, options);
-      _.extend(this, _.pick(options, ligamentOptions));
-      if (options.bootstrap !== false) {
-        this.bootstrap();
+    var Ligaments;
+    Ligaments = (function() {
+      function Ligaments(options) {
+        if (options == null) {
+          options = {};
+        }
+        this.cid = _.uniqueId('ligament');
+        this.ensureArguments.apply(this, arguments);
+        this.view = options.view, this.model = options.model, this.readOnly = options.readOnly, this.bindings = options.bindings, this.blacklist = options.blacklist, this.whitelist = options.whitelist;
+        this.createBindings();
+        if (options.inject !== false) {
+          this.bootstrapView();
+        }
+        if (!(this.readOnly || !options.ingest)) {
+          this.model.set(this.parseModel(), {
+            silent: true
+          });
+        }
+        return this;
       }
-      this.createBindings();
-      if (!this.readOnly && options.ingest !== false) {
-        return this.model.set(this.parseModel(), {
-          silent: true
-        });
-      }
-    };
-    ligamentOptions = ['view', 'model', 'readOnly', 'bindings'];
-    return _.extend(Ligaments.prototype, {
-      createBindings: function() {
-        var ingest, inject;
-        ingest = _.bind(this.ingest, this);
-        inject = _.bind(this.inject, this);
-        this.view.listenTo(this.model, 'change', inject);
+
+      Ligaments.prototype.createBindings = function() {
+        _.bindAll(this, 'ingest', 'inject');
+        this.view.listenTo(this.model, 'change', this.inject);
         if (!this.readOnly) {
           _.extend(this.view.events || (this.view.events = {}), {
-            'change *[name]:not([data-bind])': ingest,
-            'input *[name]:not([data-bind])': ingest,
-            'change *[data-bind]': ingest,
-            'input *[data-bind]': ingest
+            'change *[name]:not([data-bind])': this.ingest,
+            'input *[name]:not([data-bind])': this.ingest,
+            'change *[data-bind]': this.ingest,
+            'input *[data-bind]': this.ingest
           });
           return this.view.delegateEvents(this.view.events);
         }
-      },
-      ensureArguments: function(options) {
-        if (!options.view || !options.model) {
-          return console.warn('You must provide an instance of a Backbone view and model');
+      };
+
+      Ligaments.prototype.ensureArguments = function() {
+        var args;
+        args = [].slice.call(arguments);
+        if (!(args.length || args[0].view || args[0].model)) {
+          return console.warn('You must provide an instance of a Backbone View and Model');
         }
-      },
-      ingest: function(e) {
-        var $input, data, key, value, _this;
+      };
+
+      Ligaments.prototype.ingest = function(e) {
+        var $input, data, path, value, _ref, _this;
         _this = this;
         if (!this.readOnly) {
-          $input = $((this.target = e.target));
-          key = $input.data('bind') || $input.attr('name');
-          if (key && key.indexOf('[' > -1)) {
-            key = key.replace(/\[\]/g, (function(_this) {
-              return function() {
-                return '[' + _this.view.$('[name]').filter('[name="' + key + '"]').index($input) + ']';
-              };
-            })(this));
-            key = this.dotToBracketNotation(key, true);
+          if (!(this.blacklist && (_ref = !path, __indexOf.call(this.blacklist, _ref) >= 0) || (this.whitelist != null) && __indexOf.call(this.whitelist, path) >= 0)) {
+            $input = $(this.target = e.currentTarget);
+            path = $input.data('bind') || $input.attr('name');
+            if (path && path.indexOf('[' > -1)) {
+              path = path.replace(/\[\]/g, (function(_this) {
+                return function() {
+                  return '[' + _this.view.$('[name]').filter("[name=\"" + path + "\"]").index($input) + ']';
+                };
+              })(this));
+              path = this.dotToBracketNotation(path, true);
+            }
+            value = this.getVal($input, path);
+            if ($input.is('select[multiple]')) {
+              this.model.unset(path);
+            }
+            (data = {})[path] = value;
+            data = this.expand(data);
+            if (this.parse && _.isFunction(this.model.parse)) {
+              this.model.parse(data);
+            }
+            if (value == null) {
+              this.model.unset(path);
+            } else {
+              this.model.set(data);
+            }
+            return delete this.target;
           }
-          value = this.getVal($input);
-          if ($input.is('select[multiple]')) {
-            this.model.unset(key);
-          }
-          (data = {})[key] = value;
-          data = this.expand(data);
-          if (this.parse && _.isFunction(this.model.parse)) {
-            this.model.parse(data);
-          }
-          if (value == null) {
-            this.model.unset(key);
-          } else {
-            this.model.set(data);
-          }
-          return delete this.target;
         }
-      },
-      bootstrap: function() {
+      };
+
+      Ligaments.prototype.bootstrapView = function() {
         return this.inject(this.model, {
-          bootstrap: this.model.toJSON()
+          bootstrapData: this.model.toJSON()
         });
-      },
-      inject: function(model, options) {
-        var $bound, $boundTarget, changed, path, value, _results;
-        changed = options.bootstrap || model.changedAttributes();
+      };
+
+      Ligaments.prototype.inject = function(model, options) {
+        var $bound, $boundTarget, data, path, value, _ref, _results;
+        data = options.bootstrapData || model.changedAttributes();
         if (this.lockBinding) {
           return this;
         }
+        data = this.flatten(data);
         if (_.isFunction(this.view.beforeInject)) {
-          this.view.beforeInject(model, changed);
+          this.view.beforeInject(model, data);
         }
-        changed = this.flatten(changed);
         _results = [];
-        for (path in changed) {
-          if (!__hasProp.call(changed, path)) continue;
-          value = changed[path];
-          if (!this.binds || _.indexOf(this.binds, path) > -1) {
+        for (path in data) {
+          if (!__hasProp.call(data, path)) continue;
+          value = data[path];
+          if (!(((this.blacklist != null) && (_ref = !path, __indexOf.call(this.blacklist, _ref) >= 0)) || ((this.whitelist != null) && __indexOf.call(this.whitelist, path) >= 0))) {
             $bound = this.getBound(path);
             if ($bound.length) {
               if ($bound.is(':input')) {
                 if ($bound.is(':checkbox') || $bound.is(':radio')) {
                   if ($bound.length > 1) {
-                    $boundTarget = $bound.prop('checked', false).filter('[value="' + value + '"]');
+                    $boundTarget = $bound.prop('checked', false).filter("[value=\"" + value + "\"]");
                   } else {
                     $boundTarget = $bound;
                   }
                   _results.push($boundTarget.prop('checked', function() {
-                    return value && value.toString().toLowerCase() !== 'off' && (value.toString().toLowerCase() !== 'false');
+                    var lowerCaseString;
+                    lowerCaseString = value.toString().toLowerCase();
+                    return value && lowerCaseString !== 'off' && lowerCaseString !== 'false' && lowerCaseString !== 'no';
                   }));
                 } else if ($bound.is('select[multiple]')) {
                   _results.push($bound.val(this.model.get(path)));
@@ -138,27 +150,29 @@
           }
         }
         return _results;
-      },
-      parseModel: function() {
+      };
+
+      Ligaments.prototype.parseModel = function() {
         var $bound, flat;
-        $bound = this.view.$el.find('[name], [data-bind]');
+        $bound = this.view.$('[data-bind], [name]');
         flat = {};
         $bound.each((function(_this) {
           return function(idx, el) {
-            var $this, name;
-            $this = $(el);
-            name = $this.data('bind') || $this.attr('name');
-            name = name.replace(/\[\]/g, function() {
-              return '[' + $bound.filter('[data-bind="' + name + '"], [name="' + name + '"]').index($this) + ']';
+            var $el, path, value;
+            $el = $(el);
+            path = $el.data('bind') || $el.attr('name');
+            path = path.replace(/\[\]/g, function() {
+              return '[' + $bound.filter("[data-bind=\"" + path + "\"], [name=\"" + path + "\"]").index($el) + ']';
             });
-            if (typeof _this.getVal($this) !== 'undefined') {
-              return flat[name] = _this.getVal($this);
+            if ((value = _this.getVal($el, path)) != null) {
+              return flat[path] = value;
             }
           };
         })(this));
         return this.expand(flat);
-      },
-      getBound: function(path) {
+      };
+
+      Ligaments.prototype.getBound = function(path) {
         var eqNameSelector, nameAttribute, nameSelectors;
         if (/[0-9]+/.test(path.split('').pop())) {
           path = path.split('.');
@@ -167,23 +181,32 @@
         }
         nameAttribute = this.dotToBracketNotation(path);
         eqNameSelector = nameAttribute.replace(/(.*\[)([0-9]+)?(\].*)/g, '[name="$1$3"]:eq($2)');
-        nameSelectors = '[data-bind="' + path + '"], [name="' + path + '"] ' + eqNameSelector + ', [name="' + nameAttribute + '"]';
+        nameSelectors = "[data-bind=\"" + path + "\"], [name=\"" + path + "\"] " + eqNameSelector + ", [name=\"" + nameAttribute + "\"]";
         return this.view.$(nameSelectors).not(this.target);
-      },
-      getVal: function(input) {
-        var $input;
+      };
+
+      Ligaments.prototype.getVal = function(input, path) {
+        var $input, value, _ref, _ref1;
+        if (path == null) {
+          path = '*';
+        }
         $input = $(input);
         if ($input.is(':input')) {
           if ((!$input.is(':checkbox') && !$input.is(':radio')) || $input.prop('checked')) {
-            return $input.val();
+            value = $input.val();
           } else {
-            return void 0;
+            value = void 0;
           }
         } else {
-          return $input.text();
+          value = $input.text();
         }
-      },
-      matchToken: function(key, token) {
+        if ((((_ref = this.bindings) != null ? (_ref1 = _ref[path]) != null ? _ref1.cast : void 0 : void 0) != null) && _.isFunction(this.bindings[path].cast)) {
+          value = this.bindings[path].cast.call(this, value);
+        }
+        return value;
+      };
+
+      Ligaments.prototype.matchToken = function(key, token) {
         if (token === '{n}') {
           Number(key) % 1 === 0;
         }
@@ -194,8 +217,9 @@
           key === parseInt(token, 10);
         }
         return key === token;
-      },
-      expand: function(flat) {
+      };
+
+      Ligaments.prototype.expand = function(flat) {
         var child, out, parent, path, set, token, tokens, value, _i, _j, _len, _len1;
         if (flat.constructor !== Array) {
           flat = [flat];
@@ -226,8 +250,9 @@
           }
         }
         return out;
-      },
-      flatten: function(data, separator, depthLimit) {
+      };
+
+      Ligaments.prototype.flatten = function(data, separator, depthLimit) {
         var curr, el, key, out, path, stack;
         if (separator == null) {
           separator = '.';
@@ -263,8 +288,9 @@
           }
         }
         return out;
-      },
-      merge: function() {
+      };
+
+      Ligaments.prototype.merge = function() {
         var key, object, objects, out, value, _i, _len;
         objects = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
         out = objects.shift();
@@ -281,8 +307,9 @@
           }
         }
         return out;
-      },
-      dotToBracketNotation: function(path, reverse) {
+      };
+
+      Ligaments.prototype.dotToBracketNotation = function(path, reverse) {
         if (reverse == null) {
           reverse = false;
         }
@@ -294,8 +321,9 @@
         } else {
           return path.replace(/([\w]+)\.?/g, '[$1]').replace(/^\[(\w+)\]/, '$1');
         }
-      },
-      tokenize: function(path) {
+      };
+
+      Ligaments.prototype.tokenize = function(path) {
         if (path.indexOf('[') === -1) {
           return path.split('.');
         } else {
@@ -308,8 +336,12 @@
             }
           });
         }
-      }
-    });
+      };
+
+      return Ligaments;
+
+    })();
+    return Backbone.Ligament = Backbone.Ligaments = Ligaments;
   });
 
 }).call(this);
