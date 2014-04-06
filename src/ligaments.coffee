@@ -147,8 +147,21 @@
 			else
 				value = $input.text()
 
-			if @bindings?[path]?.cast? && _.isFunction @bindings[path].cast
-				value = @bindings[path].cast.call this, value
+			if @bindings?[path]?.cast?
+				castOptions = @bindings[path].cast
+				if _.isFunction @bindings[path].cast
+					args = []
+					caster = castOptions
+				else if  _.isArray @bindings[path].cast
+					args = castOptions[1..]
+					caster = castOptions[0]
+
+				if !args || typeof caster isnt 'function'
+					throw new Error "options.bindings[path].cast is expected to be a function or function + arguments array ex: {cast: [parseInt, 10]}"
+
+					args.unshift(value)
+
+				value = caster.apply(@model, args) || value
 
 			value
 

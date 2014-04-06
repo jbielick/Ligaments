@@ -186,7 +186,7 @@
       };
 
       Ligaments.prototype.getVal = function(input, path) {
-        var $input, value, _ref, _ref1;
+        var $input, args, castOptions, caster, value, _ref, _ref1;
         if (path == null) {
           path = '*';
         }
@@ -200,8 +200,20 @@
         } else {
           value = $input.text();
         }
-        if ((((_ref = this.bindings) != null ? (_ref1 = _ref[path]) != null ? _ref1.cast : void 0 : void 0) != null) && _.isFunction(this.bindings[path].cast)) {
-          value = this.bindings[path].cast.call(this, value);
+        if (((_ref = this.bindings) != null ? (_ref1 = _ref[path]) != null ? _ref1.cast : void 0 : void 0) != null) {
+          castOptions = this.bindings[path].cast;
+          if (_.isFunction(this.bindings[path].cast)) {
+            args = [];
+            caster = castOptions;
+          } else if (_.isArray(this.bindings[path].cast)) {
+            args = castOptions.slice(1);
+            caster = castOptions[0];
+          }
+          if (!args || typeof caster !== 'function') {
+            throw new Error("options.bindings[path].cast is expected to be a function or function + arguments array ex: {cast: [parseInt, 10]}");
+            args.unshift(value);
+          }
+          value = caster.apply(this.model, args) || value;
         }
         return value;
       };
