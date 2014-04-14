@@ -159,7 +159,7 @@
 				if !args || typeof caster isnt 'function'
 					throw new Error "options.bindings[path].cast is expected to be a function or function + arguments array ex: {cast: [parseInt, 10]}"
 
-					args.unshift(value)
+				args.unshift(value)
 
 				value = caster.apply(@model, args) || value
 

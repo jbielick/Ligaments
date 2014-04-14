@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Backbone Ligaments Unit Tests</title>
+<link rel="stylesheet" href="./qunitjs/qunit/qunit.css">
+</head>
+<body>
+	<div id="qunit"></div>
+	<div id="qunit-fixture"></div>
+	<div class="container">
+		<h1>
+			Model &lt;-&gt; View Binding
+			<br>
+			<small>View 1 - Model 1 (two-way)</small>
+		</h1>
+		<form>
+			<fieldset>
+				<legend>Complex Paths:</legend>
+				<table>
+					<tr>
+						<td>
+							<label>name:</label>
+							<kbd type="text" data-bind="name" size="30">name</kbd>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<label>User 0 Name:</label>
+							<input type="text" name="data[User][0][name]" value="Josh">
+						</td>
+						<td>
+							<label>User 0 Group:</label>
+							<select name="data[User][0][group_id]">
+								<option value="1">Admin</option>
+								<option value="2">User</option>
+							</select>
+						</td>
+						<td>
+							<label>Tall</label>
+							<input type="checkbox" name="data[User][0][tall]" value="1" checked>
+						</td>
+						<td>
+							<label>Image SRC</label>
+							<input type="text" name="data[User][0][img]">
+						</td>
+					</tr>
+					<tr>
+						<td>
+							preference
+						</td>
+						<td>
+							<label>Pref 1</label>
+							<input type="radio" name="data[User][0][preference]" value="1">
+							<label>Pref 2</label>
+							<input type="radio" name="data[User][0][preference]" value="2">
+							<label>Pref 3</label>
+							<input type="radio" name="data[User][0][preference]" value="3" checked>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							Likes
+						</td>
+						<td>
+							<select multiple name="data[User][0][likes]">
+								<option value="cats">Cats</option>
+								<option value="dogs">Dogs</option>
+								<option value="frogs">Frogs</option>
+							</select>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							Tags
+						</td>
+						<td>
+							<label>Cool</label>
+							<input type="checkbox" name="data[User][0][tags][]" value="Cool" checked>
+							<label>Smart</label>
+							<input type="checkbox" name="data[User][0][tags][]" value="Smart" checked>
+							<label>Pretty</label>
+							<input type="checkbox" name="data[User][0][tags][]" value="Pretty">
+							<label>Dumb</label>
+							<input type="checkbox" name="data[User][0][tags][]" value="Dumb">
+						</td>
+					</tr>
+				</table>
+			</fieldset>
+		</form>
+	</div>
+	<script type="text/javascript" src="./qunitjs/qunit/qunit.js"></script>
+	<script type="text/javascript" src="../lib/require.js"></script>
+	<script type="text/javascript">
+		require.config({
+			baseUrl: '../lib',
+			paths: {
+				backboneRelational: 'backbone-relational',
+				ligaments: '../dist/ligaments'
+			},
+			shim: {
+				underscore: {
+					exports: '_'
+				},
+				ligaments: {
+					deps: ['backbone']
+				},
+				'backbone-deepmodel': {
+					deps: ['backbone']
+				},
+				backbone: {
+					deps: ['jquery', 'underscore'],
+					exports: 'Backbone'
+				}
+			}
+		});
+
+		function setup() {
+			var ViewClass = Backbone.View.extend();
+			var ModelClass = Backbone.DeepModel.extend({defaults: {data: {User: [{img: 'defaultImageSrc'}]}}});
+			model = new ModelClass();
+			view = new ViewClass({el: 'form'});
+			var ligament = new Backbone.Ligaments({model: model, view: view, ingest: true});
+			return [model, view];
+		}
+
+		function getData() {
+			return {
+				"name" : "name",
+				"data": {
+					"User": [{
+						"name": "Josh",
+						"group_id": "1",
+						"tall": "1",
+						"img": "defaultImageSrc",
+						"preference": "3",
+						"tags": [
+							"Cool",
+							"Smart"
+						]
+					}]
+				}
+			};
+		}
+
+		require(['backbone', 'ligaments', 'backbone-deepmodel'], function(Backbone) {
+
+
+			module('Flatten');
+
+			test('Flatten complex object', function() {
+				var data = getData();
+				var flat = Backbone.Ligaments.prototype.flatten(data);
+
+				deepEqual(flat, {
+					'data.User.0.name': 'Josh',
+					'data.User.0.group_id': '1',
+					'data.User.0.tall': '1',
+					'data.User.0.img': 'defaultImageSrc',
+					'data.User.0.preference': '3',
+					'data.User.0.tags.0': 'Cool',
+					'data.User.0.tags.1': 'Smart',
+					'name' : 'name'
+				}, 'Flattens');
+			});
+
+			module('parseModel');
+			test('parse Model', function() {
+				var vars = setup();
+				var model = vars[0];
+				var view = vars[1];
+
+				var data = getData();
+
+				deepEqual(model.toJSON(), data, 'ingests data from view on construction if ingest option is set to true');
+			});
+
+			module('beforeInject');
+			test('DeepModel beforeInject allows modification of impending injected attributes', function() {
+				var model = new (Backbone.Model.extend({})),
+						view = new (Backbone.View.extend({
+							el: 'form',
+							beforeInject: function(model, attrs) {
+								if (attrs['data.User.0.name']) {
+									attrs['data.User.0.name'] = 'injectedModification';
+								}
+							}
+						})),
+						ligament = new Backbone.Ligaments({model: model, view: view});
+
+				model.set('data.User.0.name', 'JoshTest');
+
+				model.set('data.User.0.name', 'JoshTest2');
+
+				equal(model.get('data.User.0.name'), 'JoshTest2');
+
+			});
+
+			test('beforeInject allows modification of impending injected attributes without changing the model attributes', function() {
+				var model = new (Backbone.Model.extend())({name: 'Original Model Value'}),
+						view = new (Backbone.View.extend({
+							el: 'form',
+							beforeInject: function(model, attrs) {
+								if (attrs.name) {
+									attrs.name = 'injectedModification of ' + attrs.name;
+								}
+							}
+						})),
+						ligament = new Backbone.Ligaments({
+							model: model,
+							view: view
+						});
+
+				equal($('[data-bind="name"]').text(), 'injectedModification of Original Model Value', 'Form value has correct beforeInject modified value.');
+
+				equal(model.get('name'), 'Original Model Value', 'Model attributes remain unchanged.');
+
+			});
+
+			// test('define binding')
+
+		});
+	</script>
+</body>
+</html>
