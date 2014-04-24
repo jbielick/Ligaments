@@ -21,7 +21,7 @@
 					<tr>
 						<td>
 							<label>name:</label>
-							<kbd type="text" data-bind="name" size="30">name</kbd>
+							<kbd type="text" lg-bind="name" size="30">name</kbd>
 						</td>
 					</tr>
 					<tr>
@@ -90,134 +90,251 @@
 		</form>
 	</div>
 	<script type="text/javascript" src="./qunitjs/qunit/qunit.js"></script>
-	<script type="text/javascript" src="../lib/require.js"></script>
-	<script type="text/javascript">
-		require.config({
-			baseUrl: '../lib',
-			paths: {
-				backboneRelational: 'backbone-relational',
-				ligaments: '../dist/ligaments'
-			},
-			shim: {
-				underscore: {
-					exports: '_'
-				},
-				ligaments: {
-					deps: ['backbone']
-				},
-				'backbone-deepmodel': {
-					deps: ['backbone']
-				},
-				backbone: {
-					deps: ['jquery', 'underscore'],
-					exports: 'Backbone'
+	<script type="text/javascript" src="../lib/jquery.js"></script>
+	<script type="text/javascript" src="../lib/underscore.js"></script>
+	<script type="text/javascript" src="../lib/backbone.js"></script>
+	<script type="text/javascript" src="../lib/backbone-deepmodel.js"></script>
+	<script type="text/javascript" src="../dist/ligaments.min.js"></script>
+	<script>
+		var Factory = (function() {
+			function Factory(type, options) {
+				options || (options = {})
+				return this[type].call(this, options);
+			}
+			Factory.prototype.dataObject = function(options) {
+				return {
+					"name" : "name",
+					"data": {
+						"User": [{
+							"name": "Josh",
+							"group_id": "1",
+							"tall": "1",
+							"img": "defaultImageSrc",
+							"preference": "3",
+							"tags": [
+								"Cool",
+								"Smart"
+							]
+						}]
+					}
+				};
+			}
+			Factory.prototype.model = function(options) {
+				if (options.type) {
+
+				} else {
+					return new (Backbone.Model.extend({}))
 				}
 			}
-		});
+			Factory.prototype.view = function(options) {
+				if (options.type) {
+
+				} else {
+					return new (Backbone.View.extend({}))
+				}
+			}
+			return Factory
+		})();
 
 		function setup() {
 			var ViewClass = Backbone.View.extend();
 			var ModelClass = Backbone.DeepModel.extend({defaults: {data: {User: [{img: 'defaultImageSrc'}]}}});
-			model = new ModelClass();
-			view = new ViewClass({el: 'form'});
+			var model = new ModelClass();
+			var view = new ViewClass({el: 'form'});
 			var ligament = new Backbone.Ligaments({model: model, view: view, ingest: true});
 			return [model, view];
 		}
 
-		function getData() {
-			return {
-				"name" : "name",
-				"data": {
-					"User": [{
-						"name": "Josh",
-						"group_id": "1",
-						"tall": "1",
-						"img": "defaultImageSrc",
-						"preference": "3",
-						"tags": [
-							"Cool",
-							"Smart"
-						]
-					}]
+		module('Flatten');
+
+		test('Flatten complex object', function() {
+			var data = new Factory('dataObject');
+			var flat = Backbone.Ligaments.prototype.flatten(data);
+
+			deepEqual(flat, {
+				'data.User.0.name': 'Josh',
+				'data.User.0.group_id': '1',
+				'data.User.0.tall': '1',
+				'data.User.0.img': 'defaultImageSrc',
+				'data.User.0.preference': '3',
+				'data.User.0.tags.0': 'Cool',
+				'data.User.0.tags.1': 'Smart',
+				'name' : 'name'
+			}, 'Flattens a complex object with array and nesting');
+		});
+
+		test('Flattens Array', function() {
+			var data = [
+				'one', 
+				'two',
+				'three'
+			];
+			var flat = Backbone.Ligaments.prototype.flatten(data);
+			deepEqual(flat, {'0': 'one', '1': 'two', '2': 'three'}, 'Flattens an array.');
+		});
+
+		test('Flattens An Array of Objects', function() {
+			var data = [
+				{key: 'value'},
+				{foo: 'bar'},
+				{zig: 'zag'}
+			];
+			var flat = Backbone.Ligaments.prototype.flatten(data);
+			deepEqual(flat, {
+				'0.key': 'value',
+				'1.foo': 'bar',
+				'2.zig': 'zag'
+			}, 'Flattens an array of objects.');
+		});
+
+		module('parseModel');
+		test('ingest data on construction', function() {
+			var vars = setup();
+			var model = vars[0];
+			var view = vars[1];
+
+			var data = new Factory('dataObject');
+
+			deepEqual(model.toJSON(), data, 'ingests data from view on construction if ingest option is set to true');
+		});
+
+		module('beforeInject');
+		test('DeepModel beforeInject allows modification of impending injected attributes', function() {
+			var model = new (Backbone.Model.extend({})),
+					view = new (Backbone.View.extend({
+						el: 'form',
+						beforeInject: function(model, attrs) {
+							if (attrs['data.User.0.name']) {
+								attrs['data.User.0.name'] = 'injectedModification';
+							}
+						}
+					})),
+					ligament = new Backbone.Ligaments({model: model, view: view});
+
+			model.set('data.User.0.name', 'JoshTest');
+
+			model.set('data.User.0.name', 'JoshTest2');
+
+			equal(model.get('data.User.0.name'), 'JoshTest2', 'Model attributes remain unaffected by beforeInject attr modification');
+			equal(ligament.getBound('data.User.0.name').val(), 'injectedModification', 'beforeInject modifies the injection')
+
+		});
+
+		test('beforeInject allows modification of impending injected attributes without changing the model attributes', function() {
+			var model = new (Backbone.Model.extend())({name: 'Original Model Value'}),
+					view = new (Backbone.View.extend({
+						el: 'form',
+						beforeInject: function(model, attrs) {
+							if (attrs.name) {
+								attrs.name = 'injectedModification of ' + attrs.name;
+							}
+						}
+					})),
+					ligament = new Backbone.Ligaments({
+						model: model,
+						view: view
+					});
+
+			equal($('[lg-bind="name"]').text(), 'injectedModification of Original Model Value', 'Form value has correct beforeInject modified value.');
+
+			equal(model.get('name'), 'Original Model Value', 'Model attributes remain unchanged.');
+
+		});
+
+		module("Caster");
+
+		test('casts using [callable, *args] syntax (parseInt)', function() {
+			var model = new Factory('model'),
+					view = new Factory('view'),
+					ligament,
+					$input;
+
+			$input = $('<input type="text" lg-bind="castAttr" />').appendTo(view.$el);
+
+			ligament = new Backbone.Ligaments({
+				view: view, 
+				model: model,
+				bindings: {
+					'castAttr': {
+						cast: [parseInt, 10]
+					}
 				}
-			};
-		}
-
-		require(['backbone', 'ligaments', 'backbone-deepmodel'], function(Backbone) {
-
-
-			module('Flatten');
-
-			test('Flatten complex object', function() {
-				var data = getData();
-				var flat = Backbone.Ligaments.prototype.flatten(data);
-
-				deepEqual(flat, {
-					'data.User.0.name': 'Josh',
-					'data.User.0.group_id': '1',
-					'data.User.0.tall': '1',
-					'data.User.0.img': 'defaultImageSrc',
-					'data.User.0.preference': '3',
-					'data.User.0.tags.0': 'Cool',
-					'data.User.0.tags.1': 'Smart',
-					'name' : 'name'
-				}, 'Flattens');
 			});
 
-			module('parseModel');
-			test('parse Model', function() {
-				var vars = setup();
-				var model = vars[0];
-				var view = vars[1];
+			$input.val('6').trigger('change');
 
-				var data = getData();
+			equal(model.get('castAttr'), 6, 'should cast an ingestion using a [function, arg] cast declaration in bindings hash');
 
-				deepEqual(model.toJSON(), data, 'ingests data from view on construction if ingest option is set to true');
+		});
+
+		test('casts using custom function, providing arg array to callback', function() {
+			var model = new Factory('model'),
+					view = new Factory('view'),
+					ligament,
+					$input;
+
+			$input = $('<input type="text" lg-bind="castAttr" />').appendTo(view.$el);
+
+			ligament = new Backbone.Ligaments({
+				view: view, 
+				model: model,
+				bindings: {
+					'castAttr': {
+						cast: [function(val, arg1, arg2) {
+							var val = parseInt(val, 10);
+							return val * arg1 * arg2;
+						}, 2, 3]
+					}
+				}
 			});
 
-			module('beforeInject');
-			test('DeepModel beforeInject allows modification of impending injected attributes', function() {
-				var model = new (Backbone.Model.extend({})),
-						view = new (Backbone.View.extend({
-							el: 'form',
-							beforeInject: function(model, attrs) {
-								if (attrs['data.User.0.name']) {
-									attrs['data.User.0.name'] = 'injectedModification';
-								}
-							}
-						})),
-						ligament = new Backbone.Ligaments({model: model, view: view});
+			$input.val('6').trigger('change');
 
-				model.set('data.User.0.name', 'JoshTest');
+			equal(model.get('castAttr'), 36, 'should cast an ingestion using a [function, arg] cast declaration with custom function in bindings hash');
 
-				model.set('data.User.0.name', 'JoshTest2');
+		});
 
-				equal(model.get('data.User.0.name'), 'JoshTest2');
+		module("Ingest/Inject Declarations");
 
+		test('read only (lg-method = inject) attribute', function() {
+			var model = new Factory('model'),
+					view = new Factory('view'),
+					ligament,
+					$input;
+
+			$input = $('<input type="text" lg-bind="castAttr" lg-method="inject"/>').appendTo(view.$el);
+
+			ligament = new Backbone.Ligaments({
+				view: view, 
+				model: model
 			});
 
-			test('beforeInject allows modification of impending injected attributes without changing the model attributes', function() {
-				var model = new (Backbone.Model.extend())({name: 'Original Model Value'}),
-						view = new (Backbone.View.extend({
-							el: 'form',
-							beforeInject: function(model, attrs) {
-								if (attrs.name) {
-									attrs.name = 'injectedModification of ' + attrs.name;
-								}
-							}
-						})),
-						ligament = new Backbone.Ligaments({
-							model: model,
-							view: view
-						});
+			$input.val('6').trigger('change');
 
-				equal($('[data-bind="name"]').text(), 'injectedModification of Original Model Value', 'Form value has correct beforeInject modified value.');
+			equal(model.get('castAttr'), undefined, 'input changed, but lg-method was inject-only. model should not be changed.');
 
-				equal(model.get('name'), 'Original Model Value', 'Model attributes remain unchanged.');
+		});
 
+		test('write only (lg-method = ingest) attribute', function() {
+			var model = new Factory('model'),
+					view = new Factory('view'),
+					ligament,
+					$input;
+
+			$input = $('<input type="text" value="original" lg-bind="writeonly" lg-method="ingest"/>').appendTo(view.$el);
+
+			ligament = new Backbone.Ligaments({
+				view: view, 
+				model: model
 			});
 
-			// test('define binding')
+			model.set('writeonly', 'changed');
+
+			equal($input.val(), 'original', 'model changed, but lg-method was ingest-only. bound element value should not be changed.');
+
+			$input.val('thenChanged').trigger('change');
+
+			equal(model.get('writeonly'), 'thenChanged', 'Model attribute is updated with lg-method ingest input is changed.')
 
 		});
 	</script>

@@ -31,10 +31,10 @@
 
 			unless @readOnly
 				_.extend (@view.events || (@view.events = {})), 
-					'change *[name]:not([data-bind])'			: @ingest,
-					'input *[name]:not([data-bind])'			: @ingest,
-					'change *[data-bind]' 								: @ingest,
-					'input *[data-bind]' 									: @ingest
+					'change *[name]:not([lg-bind])'			: @ingest,
+					'input *[name]:not([lg-bind])'			: @ingest,
+					'change *[lg-bind]' 								: @ingest,
+					'input *[lg-bind]' 									: @ingest
 				@view.delegateEvents(@view.events)
 
 
@@ -50,13 +50,15 @@
 			unless @readOnly
 				unless @blacklist and not path in @blacklist or @whitelist? and path in @whitelist
 					$input = $(@target = e.currentTarget)
-					path = $input.data('bind') || $input.attr('name')
+					path = $input.attr('lg-bind') || $input.attr('name')
 
 					if path and path.indexOf '[' > -1
 						path = path.replace(/\[\]/g, () => '[' + @view.$('[name]').filter("[name=\"#{path}\"]").index($input) + ']')
 						path = @dotToBracketNotation path, true
 
 					value = @getVal $input, path
+
+					return null if $input.attr('lg-method') == 'inject'
 
 					if $input.is 'select[multiple]'
 						@model.unset path
@@ -69,7 +71,7 @@
 
 					unless value? then @model.unset path else @model.set data
 
-					delete @target
+			delete @target
 
 		bootstrapView: () ->
 			@inject @model, bootstrapData: @model.toJSON()
@@ -89,6 +91,7 @@
 					$bound = @getBound path
 
 					if $bound.length
+						return null if $bound.attr('lg-method') == 'ingest'
 						if $bound.is ':input'
 							if $bound.is(':checkbox') or $bound.is(':radio')
 								if $bound.length > 1
@@ -109,14 +112,14 @@
 
 
 		parseModel: () ->
-			$bound = @view.$ '[data-bind], [name]'
+			$bound = @view.$ '[lg-bind], [name]'
 			flat = {}
 
 			$bound.each (idx, el) => 
 				$el = $(el)
-				path = $el.data('bind') or $el.attr('name')
+				path = $el.attr('lg-bind') or $el.attr('name')
 				path = path.replace /\[\]/g, () ->
-					'[' + $bound.filter("[data-bind=\"#{path}\"], [name=\"#{path}\"]").index($el) + ']'
+					'[' + $bound.filter("[lg-bind=\"#{path}\"], [name=\"#{path}\"]").index($el) + ']'
 
 				if (value = @getVal($el, path))?
 					flat[path] = value
@@ -132,7 +135,7 @@
 
 			nameAttribute = @dotToBracketNotation path
 			eqNameSelector = nameAttribute.replace(/(.*\[)([0-9]+)?(\].*)/g, '[name="$1$3"]:eq($2)')
-			nameSelectors = "[data-bind=\"#{path}\"], [name=\"#{path}\"] #{eqNameSelector}, [name=\"#{nameAttribute}\"]"
+			nameSelectors = "[lg-bind=\"#{path}\"], [name=\"#{path}\"] #{eqNameSelector}, [name=\"#{nameAttribute}\"]"
 
 			@view.$(nameSelectors).not(@target)
 
