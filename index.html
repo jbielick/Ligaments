@@ -1,0 +1,140 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Ligaments by jbielick</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1>Ligaments</h1>
+        <p>Model-View binding for Backbone.js — Bind your bones.</p>
+
+        <p class="view"><a href="https://github.com/jbielick/Ligaments">View the Project on GitHub <small>jbielick/Ligaments</small></a></p>
+
+
+        <ul>
+          <li><a href="https://github.com/jbielick/Ligaments/zipball/master">Download <strong>ZIP File</strong></a></li>
+          <li><a href="https://github.com/jbielick/Ligaments/tarball/master">Download <strong>TAR Ball</strong></a></li>
+          <li><a href="https://github.com/jbielick/Ligaments">View On <strong>GitHub</strong></a></li>
+        </ul>
+      </header>
+      <section>
+        <h1>
+<a name="backbone-ligaments" class="anchor" href="#backbone-ligaments"><span class="octicon octicon-link"></span></a>Backbone Ligaments</h1>
+
+<p>Declarative data binding between Backbone Models and Views.</p>
+
+<p>Currently in beta.</p>
+
+<h3>
+<a name="about" class="anchor" href="#about"><span class="octicon octicon-link"></span></a>About</h3>
+
+<p>ligaments.js binds DOM Elements to Model Attributes on the <code>name</code> attributes of elements within the view. 
+<code>Model.changedAttributes()</code> are injected on each change event. Any <code>change</code> or <code>input</code> event from an element with a <code>name</code> attribute or <code>data-bind</code> attribute within the bound view will set the new data to the bound model and fire a <code>change</code> event. The data will be set at the path indicated in the <code>name</code> or <code>data-bind</code> attribute in dot-notation or bracket-notation.</p>
+
+<div class="highlight highlight-js"><pre><span class="c1">//  name="data[User][Profile][name]</span>
+<span class="c1">// or   </span>
+<span class="c1">//  data-bind="data.User.Profile.name"</span>
+<span class="c1">// </span>
+<span class="c1">// yields</span>
+
+<span class="p">{</span>
+    <span class="nx">data</span><span class="o">:</span> <span class="p">{</span>
+        <span class="nx">User</span><span class="o">:</span> <span class="p">{</span>
+            <span class="nx">Profile</span><span class="o">:</span> <span class="p">{</span>
+                <span class="nx">name</span><span class="o">:</span> <span class="s1">'.val() or .text()'</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+</pre></div>
+
+<h3>
+<a name="usage" class="anchor" href="#usage"><span class="octicon octicon-link"></span></a>Usage:</h3>
+
+<p>Include the ligaments.js file in your application after backbone.js and before any of your views or models are loaded or required.</p>
+
+<p>To create data binding between a view and a model, construct a new Ligaments instance by calling <code>Backbone.Ligaments(options)</code> method and pass it a object containing your view, model and other options. Currently, there is no way to <del>divorce</del> unbind the view from the model.</p>
+
+<div class="highlight highlight-js"><pre>    <span class="kd">var</span> <span class="nx">ViewClass</span> <span class="o">=</span> <span class="nx">Backbone</span><span class="p">.</span><span class="nx">View</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span><span class="nx">el</span><span class="o">:</span> <span class="s1">'.MyView'</span><span class="p">});</span>
+    <span class="kd">var</span> <span class="nx">ModelClass</span> <span class="o">=</span> <span class="nx">Backbone</span><span class="p">.</span><span class="nx">Model</span><span class="p">.</span><span class="nx">extend</span><span class="p">();</span>
+    <span class="k">new</span> <span class="nx">Backbone</span><span class="p">.</span><span class="nx">Ligaments</span><span class="p">({</span><span class="nx">model</span><span class="o">:</span> <span class="k">new</span> <span class="nx">ModelClass</span><span class="p">(),</span> <span class="nx">view</span><span class="o">:</span> <span class="k">new</span> <span class="nx">ViewClass</span><span class="p">()});</span>
+</pre></div>
+
+<p>All input changes in the view will then be ingested by the model and set to its attributes. Since <code>{readOnly: true}</code> wasn't set in the options, Ligaments will default to two-way binding—that is, any attributes set on the model programmatically will be injected into the view.</p>
+
+<h4>
+<a name="example" class="anchor" href="#example"><span class="octicon octicon-link"></span></a>Example:</h4>
+
+<div class="highlight highlight-js"><pre>    <span class="kd">var</span> <span class="nx">ViewClass</span> <span class="o">=</span> <span class="nx">Backbone</span><span class="p">.</span><span class="nx">View</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span><span class="nx">el</span><span class="o">:</span> <span class="s1">'.MyElement'</span><span class="p">});</span>
+
+    <span class="kd">var</span> <span class="nx">ModelClass</span> <span class="o">=</span> <span class="nx">Backbone</span><span class="p">.</span><span class="nx">Model</span><span class="p">.</span><span class="nx">extend</span><span class="p">();</span>
+
+    <span class="k">new</span> <span class="nx">Backbone</span><span class="p">.</span><span class="nx">Ligaments</span><span class="p">({</span><span class="nx">model</span><span class="o">:</span> <span class="k">new</span> <span class="nx">ModelClass</span><span class="p">(),</span> <span class="nx">view</span><span class="o">:</span> <span class="k">new</span> <span class="nx">ViewClass</span><span class="p">()});</span>
+</pre></div>
+
+<h2>
+<a name="features" class="anchor" href="#features"><span class="octicon octicon-link"></span></a>Features</h2>
+
+<h1></h1>
+
+<h3>
+<a name="beforeinject-callback" class="anchor" href="#beforeinject-callback"><span class="octicon octicon-link"></span></a>beforeInject callback</h3>
+
+<p><code>Backbone.View.beforeInject(model, changedAttributes)</code></p>
+
+<p>You may need to translate, mask or manipulate values before they are injected into the view. If a beforeInject method exists on the view that is bound, it will be called in the context of your view and provided the model and the hash returned by Backbone.Model.changedAttributes() method.</p>
+
+<p>For example, if your model attribute createdAt stores a datetime string in an ISO/JSON format, but you'd like for it to display as a readable string in your view, check for the changed attribute createdAt in the changedAttributes argument of beforeInject and simply overwrite the value in the changedAttributes hash.</p>
+
+<p>Doing so won't affect your model or Backbone's copy of changed and previous attributes, but will provide Ligaments with a translated value to inject into the view.</p>
+
+<div class="highlight highlight-js"><pre>    <span class="kd">var</span> <span class="nx">ViewClass</span> <span class="o">=</span> <span class="nx">Backbone</span><span class="p">.</span><span class="nx">View</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+        <span class="nx">el</span><span class="o">:</span> <span class="s1">'.meta'</span><span class="p">,</span>
+        <span class="nx">beforeInject</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">model</span><span class="p">,</span> <span class="nx">changed</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="nx">changed</span><span class="p">.</span><span class="nx">createdAt</span><span class="p">)</span> <span class="p">{</span>
+                <span class="nx">changed</span><span class="p">.</span><span class="nx">createdAt</span> <span class="o">=</span> <span class="p">(</span><span class="k">new</span> <span class="nb">Date</span><span class="p">(</span><span class="nx">changed</span><span class="p">.</span><span class="nx">createdAt</span><span class="p">)).</span><span class="nx">toLocaleString</span><span class="p">();</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">});</span>
+</pre></div>
+
+<h3>
+<a name="selective-bindings" class="anchor" href="#selective-bindings"><span class="octicon octicon-link"></span></a>Selective Bindings</h3>
+
+<p>By default, Backbone.Ligaments will bind all attributes. If you'd like for Backbone.Ligaments to only bind select attributes between your view and model, add an array of attribute names to the binds property of the options hash if you'd like to only bind certain attributes.</p>
+
+<div class="highlight highlight-js"><pre>    <span class="k">new</span> <span class="nx">Backbone</span><span class="p">.</span><span class="nx">Ligaments</span><span class="p">({</span>
+        <span class="nx">model</span><span class="o">:</span> <span class="nx">UserModel</span><span class="p">,</span>
+        <span class="nx">view</span><span class="o">:</span> <span class="nx">UserView</span><span class="p">,</span>
+        <span class="nx">binds</span><span class="o">:</span> <span class="p">[</span>
+            <span class="s1">'first_name'</span><span class="p">,</span>
+            <span class="s1">'last_name'</span>
+        <span class="p">]</span>
+    <span class="p">});</span>
+</pre></div>
+
+<h3>
+<a name="compatibility" class="anchor" href="#compatibility"><span class="octicon octicon-link"></span></a>Compatibility</h3>
+
+<p><code>Backbone.Ligaments</code> has been tested and works with <code>Backbone.DeepModel</code></p>
+      </section>
+      <footer>
+        <p>This project is maintained by <a href="https://github.com/jbielick">jbielick</a></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+      </footer>
+    </div>
+    <script src="javascripts/scale.fix.js"></script>
+    
+  </body>
+</html>
