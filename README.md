@@ -7,7 +7,7 @@ Currently in beta.
 
 ###About
 
-ligaments.js binds DOM Elements to Model Attributes on the `name` attributes or `lg-bind` attribute declaration of elements within the view. 
+Backbone.Ligaments binds DOM Elements to Model Attributes on the `name` attributes or `lg-bind` attribute declaration of elements within the view. 
 `Model.changedAttributes()` are injected on each attribute change event. Backbone-Ligament is fully dot-path accessor friendly. You can use this with `Backbone.DeepModel`
 and have full control over injecting, ingesting and binding nested attributes. Any `change` or `input` event from an element 
 with a `name` attribute or `lg-bind` attribute within the bound backbone view instance's element will set the new data to the corresponding bound model attribute 
