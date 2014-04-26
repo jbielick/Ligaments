@@ -1,0 +1,40 @@
+{
+  "name": "backbone-ligaments",
+  "version": "0.7.0",
+  "description": "Model-View binding for BackboneJS",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "dependencies": {
+    "grunt-contrib-copy": "~0.5.0",
+    "grunt-contrib-coffee": "~0.10.1",
+    "grunt-contrib-qunit": "~0.4.0",
+    "grunt-contrib-watch": "~0.6.1",
+    "grunt": "~0.4.4",
+    "grunt-contrib-uglify": "~0.4.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "grunt test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/jbielick/ligaments.git"
+  },
+  "keywords": [
+    "binding",
+    "model-view",
+    "declarative",
+    "mvvm",
+    "backbone",
+    "extension",
+    "data",
+    "views"
+  ],
+  "author": "Josh Bielick",
+  "license": "GNU General Public License",
+  "bugs": {
+    "url": "https://github.com/jbielick/ligaments/issues"
+  }
+}
