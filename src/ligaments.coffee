@@ -9,6 +9,8 @@
 ((factory) -> 
 	if typeof define is 'function' and define.amd
 		define ['underscore', 'backbone'], factory
+	else if exports? && module?
+		factory require('underscore'), require('backbone')
 	else
 		factory _, Backbone
 )( (_, Backbone) ->

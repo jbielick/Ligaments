@@ -16,6 +16,8 @@
   (function(factory) {
     if (typeof define === 'function' && define.amd) {
       return define(['underscore', 'backbone'], factory);
+    } else if ((typeof exports !== "undefined" && exports !== null) && (typeof module !== "undefined" && module !== null)) {
+      return factory(require('underscore'), require('backbone'));
     } else {
       return factory(_, Backbone);
     }
