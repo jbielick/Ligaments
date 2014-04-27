@@ -8,12 +8,12 @@
 ###
 ((factory) -> 
 	if typeof define is 'function' and define.amd
-		define ['underscore', 'backbone'], factory
+		define ['underscore'], factory
 	else if exports? && module?
 		factory require('underscore')
 	else
-		factory _, Backbone
-)( (_, Backbone) ->
+		factory _
+)( (_) ->
 
 	class Ligaments
 
@@ -262,10 +262,11 @@
 					v = v.replace /\]/, ''
 					if v is '' then '{n}' else v
 
-		if Backbone?
-			Backbone.Ligament = Backbone.Ligaments = Ligaments
-		else if exports?
-			module.exports = Ligaments
-		else
-			Ligaments
+	if window? and window.Backbone?
+		Backbone.Ligament = Backbone.Ligaments = Ligaments
+	else if typeof exports is 'object'
+		module.exports = Ligaments
+	else
+		Ligaments
+		
 )

@@ -15,13 +15,13 @@
 
   (function(factory) {
     if (typeof define === 'function' && define.amd) {
-      return define(['underscore', 'backbone'], factory);
+      return define(['underscore'], factory);
     } else if ((typeof exports !== "undefined" && exports !== null) && (typeof module !== "undefined" && module !== null)) {
-      return factory(require('underscore'), require('backbone'));
+      return factory(require('underscore'));
     } else {
-      return factory(_, Backbone);
+      return factory(_);
     }
-  })(function(_, Backbone) {
+  })(function(_) {
     var Ligaments;
     Ligaments = (function() {
       function Ligaments(options) {
@@ -355,7 +355,13 @@
       return Ligaments;
 
     })();
-    return Backbone.Ligament = Backbone.Ligaments = Ligaments;
+    if ((typeof window !== "undefined" && window !== null) && (window.Backbone != null)) {
+      return Backbone.Ligament = Backbone.Ligaments = Ligaments;
+    } else if (typeof exports === 'object') {
+      return module.exports = Ligaments;
+    } else {
+      return Ligaments;
+    }
   });
 
 }).call(this);
