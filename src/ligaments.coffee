@@ -10,10 +10,10 @@
 	if typeof define is 'function' and define.amd
 		define ['underscore'], factory
 	else if exports? && module?
-		factory require('underscore')
+		factory require('underscore'), require('jquery')
 	else
 		factory _
-)( (_) ->
+)( (_, $) ->
 
 	class Ligaments
 

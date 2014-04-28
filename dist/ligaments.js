@@ -17,11 +17,11 @@
     if (typeof define === 'function' && define.amd) {
       return define(['underscore'], factory);
     } else if ((typeof exports !== "undefined" && exports !== null) && (typeof module !== "undefined" && module !== null)) {
-      return factory(require('underscore'));
+      return factory(require('underscore'), require('jquery'));
     } else {
       return factory(_);
     }
-  })(function(_) {
+  })(function(_, $) {
     var Ligaments;
     Ligaments = (function() {
       function Ligaments(options) {
