@@ -1,7 +1,7 @@
 
 /*
   *  Backbone.Ligaments
-  * 	  Declarative view-model data binding for Backbone.js
+  *    Declarative view-model data binding for Backbone.js
   *  
   *  Author: Josh Bielick
   *  License: GNU GENERAL PUBLIC LICENSE
@@ -15,11 +15,11 @@
 
   (function(factory) {
     if (typeof define === 'function' && define.amd) {
-      return define(['underscore'], factory);
-    } else if ((typeof exports !== "undefined" && exports !== null) && (typeof module !== "undefined" && module !== null)) {
+      return define(['underscore', 'jquery'], factory);
+    } else if ((typeof exports !== "undefined" && exports !== null) && typeof module === 'object') {
       return factory(require('underscore'), require('jquery'));
     } else {
-      return factory(_);
+      return factory(_, window.jQuery);
     }
   })(function(_, $) {
     var Ligaments;
@@ -355,7 +355,7 @@
       return Ligaments;
 
     })();
-    if ((typeof window !== "undefined" && window !== null) && (window.Backbone != null)) {
+    if (typeof window === 'object' && (window.Backbone != null)) {
       return Backbone.Ligament = Backbone.Ligaments = Ligaments;
     } else if (typeof exports === 'object') {
       return module.exports = Ligaments;
