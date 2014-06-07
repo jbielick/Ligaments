@@ -121,7 +121,10 @@
         for (path in data) {
           if (!__hasProp.call(data, path)) continue;
           value = data[path];
-          if (!(!path || ((this.blacklist != null) && (_ref = !path, __indexOf.call(this.blacklist, _ref) >= 0)) || ((this.whitelist != null) && __indexOf.call(this.whitelist, path) >= 0))) {
+          if (!((path != null) && path.length > 0)) {
+            continue;
+          }
+          if (!(((this.blacklist != null) && (_ref = !path, __indexOf.call(this.blacklist, _ref) >= 0)) || ((this.whitelist != null) && __indexOf.call(this.whitelist, path) >= 0))) {
             $bound = this.getBound(path);
             if ($bound.length) {
               if ($bound.attr('lg-method') === 'ingest') {
