@@ -1,6 +1,6 @@
 {
   "name": "backbone-ligaments",
-  "version": "0.7.4",
+  "version": "0.7.5",
   "description": "Model-View binding for Backbone.js",
   "main": "index.js",
   "directories": {
