@@ -130,7 +130,7 @@
 
 
     getBound: (path) ->
-      if /[0-9]+/.test path.split('').pop()
+      if /\.[0-9]+$/.test path
         path = path.split('.')
         path.pop()
         path = path.join('.')
@@ -138,7 +138,6 @@
       nameAttribute = @dotToBracketNotation path
       eqNameSelector = nameAttribute.replace(/(.*\[)([0-9]+)?(\].*)/g, '[name="$1$3"]:eq($2)')
       nameSelectors = "[lg-bind=\"#{path}\"], [name=\"#{path}\"] #{eqNameSelector}, [name=\"#{nameAttribute}\"]"
-
       @view.$(nameSelectors).not(@target)
 
 

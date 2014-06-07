@@ -179,7 +179,7 @@
 
       Ligaments.prototype.getBound = function(path) {
         var eqNameSelector, nameAttribute, nameSelectors;
-        if (/[0-9]+/.test(path.split('').pop())) {
+        if (/\.[0-9]+$/.test(path)) {
           path = path.split('.');
           path.pop();
           path = path.join('.');

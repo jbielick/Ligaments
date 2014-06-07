@@ -6,337 +6,379 @@
 <link rel="stylesheet" href="./qunitjs/qunit/qunit.css">
 </head>
 <body>
-	<div id="qunit"></div>
-	<div id="qunit-fixture"></div>
-	<div class="container">
-		<h1>
-			Model &lt;-&gt; View Binding
-			<br>
-			<small>View 1 - Model 1 (two-way)</small>
-		</h1>
-		<form>
-			<fieldset>
-				<legend>Complex Paths:</legend>
-				<table>
-					<tr>
-						<td>
-							<label>name:</label>
-							<kbd type="text" lg-bind="name" size="30">name</kbd>
-						</td>
-					</tr>
-					<tr>
-						<td>
-							<label>User 0 Name:</label>
-							<input type="text" name="data[User][0][name]" value="Josh">
-						</td>
-						<td>
-							<label>User 0 Group:</label>
-							<select name="data[User][0][group_id]">
-								<option value="1">Admin</option>
-								<option value="2">User</option>
-							</select>
-						</td>
-						<td>
-							<label>Tall</label>
-							<input type="checkbox" name="data[User][0][tall]" value="1" checked>
-						</td>
-						<td>
-							<label>Image SRC</label>
-							<input type="text" name="data[User][0][img]">
-						</td>
-					</tr>
-					<tr>
-						<td>
-							preference
-						</td>
-						<td>
-							<label>Pref 1</label>
-							<input type="radio" name="data[User][0][preference]" value="1">
-							<label>Pref 2</label>
-							<input type="radio" name="data[User][0][preference]" value="2">
-							<label>Pref 3</label>
-							<input type="radio" name="data[User][0][preference]" value="3" checked>
-						</td>
-					</tr>
-					<tr>
-						<td>
-							Likes
-						</td>
-						<td>
-							<select multiple name="data[User][0][likes]">
-								<option value="cats">Cats</option>
-								<option value="dogs">Dogs</option>
-								<option value="frogs">Frogs</option>
-							</select>
-						</td>
-					</tr>
-					<tr>
-						<td>
-							Tags
-						</td>
-						<td>
-							<label>Cool</label>
-							<input type="checkbox" name="data[User][0][tags][]" value="Cool" checked>
-							<label>Smart</label>
-							<input type="checkbox" name="data[User][0][tags][]" value="Smart" checked>
-							<label>Pretty</label>
-							<input type="checkbox" name="data[User][0][tags][]" value="Pretty">
-							<label>Dumb</label>
-							<input type="checkbox" name="data[User][0][tags][]" value="Dumb">
-						</td>
-					</tr>
-				</table>
-			</fieldset>
-		</form>
-	</div>
-	<script type="text/javascript" src="./qunitjs/qunit/qunit.js"></script>
-	<script type="text/javascript" src="../lib/jquery.js"></script>
-	<script type="text/javascript" src="../lib/underscore.js"></script>
-	<script type="text/javascript" src="../lib/backbone.js"></script>
-	<script type="text/javascript" src="../lib/backbone-deep-model.min.js"></script>
-	<script type="text/javascript" src="../dist/ligaments.min.js"></script>
-	<script>
-		var Factory = (function() {
-			function Factory(type, options) {
-				options || (options = {})
-				return this[type].call(this, options);
-			}
-			Factory.prototype.dataObject = function(options) {
-				return {
-					"name" : "name",
-					"data": {
-						"User": [{
-							"name": "Josh",
-							"group_id": "1",
-							"tall": "1",
-							"img": "defaultImageSrc",
-							"preference": "3",
-							"tags": [
-								"Cool",
-								"Smart"
-							]
-						}]
-					}
-				};
-			}
-			Factory.prototype.model = function(options) {
-				if (options.type) {
+  <div id="qunit"></div>
+  <div id="qunit-fixture"></div>
+  <div class="container">
+    <h1>
+      Model &lt;-&gt; View Binding
+      <br>
+      <small>View 1 - Model 1 (two-way)</small>
+    </h1>
+    <form>
+      <fieldset>
+        <legend>Complex Paths:</legend>
+        <table>
+          <tr>
+            <td>
+              <label>name:</label>
+              <kbd type="text" lg-bind="name" size="30">name</kbd>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <label>User 0 Name:</label>
+              <input type="text" name="data[User][0][name]" value="Josh">
+            </td>
+            <td>
+              <label>User 0 Group:</label>
+              <select name="data[User][0][group_id]">
+                <option value="1">Admin</option>
+                <option value="2">User</option>
+              </select>
+            </td>
+            <td>
+              <label>Tall</label>
+              <input type="checkbox" name="data[User][0][tall]" value="1" checked>
+            </td>
+            <td>
+              <label>Image SRC</label>
+              <input type="text" name="data[User][0][img]">
+            </td>
+          </tr>
+          <tr>
+            <td>
+              preference
+            </td>
+            <td>
+              <label>Pref 1</label>
+              <input type="radio" name="data[User][0][preference]" value="1">
+              <label>Pref 2</label>
+              <input type="radio" name="data[User][0][preference]" value="2">
+              <label>Pref 3</label>
+              <input type="radio" name="data[User][0][preference]" value="3" checked>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              Likes
+            </td>
+            <td>
+              <select multiple name="data[User][0][likes]">
+                <option value="cats">Cats</option>
+                <option value="dogs">Dogs</option>
+                <option value="frogs">Frogs</option>
+              </select>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              Tags
+            </td>
+            <td>
+              <label>Cool</label>
+              <input type="checkbox" name="data[User][0][tags][]" value="Cool" checked>
+              <label>Smart</label>
+              <input type="checkbox" name="data[User][0][tags][]" value="Smart" checked>
+              <label>Pretty</label>
+              <input type="checkbox" name="data[User][0][tags][]" value="Pretty">
+              <label>Dumb</label>
+              <input type="checkbox" name="data[User][0][tags][]" value="Dumb">
+            </td>
+          </tr>
+        </table>
+      </fieldset>
+    </form>
+  </div>
+  <script type="text/javascript" src="./qunitjs/qunit/qunit.js"></script>
+  <script type="text/javascript" src="../lib/jquery.js"></script>
+  <script type="text/javascript" src="../lib/underscore.js"></script>
+  <script type="text/javascript" src="../lib/backbone.js"></script>
+  <script type="text/javascript" src="../lib/backbone-nested.js"></script>
+  <script type="text/javascript" src="../dist/ligaments.min.js"></script>
+  <script>
+    var Factory = (function() {
+      function Factory(type, options) {
+        options || (options = {})
+        return this[type].call(this, options);
+      }
+      Factory.prototype.dataObject = function(options) {
+        return {
+          "name" : "name",
+          "data": {
+            "User": [{
+              "name": "Josh",
+              "group_id": "1",
+              "tall": "1",
+              "img": "defaultImageSrc",
+              "preference": "3",
+              "tags": [
+                "Cool",
+                "Smart"
+              ]
+            }]
+          }
+        };
+      }
+      Factory.prototype.model = function(options) {
+        if (options.type) {
 
-				} else {
-					return new (Backbone.Model.extend({}))
-				}
-			}
-			Factory.prototype.view = function(options) {
-				if (options.type) {
+        } else {
+          return new (Backbone.Model.extend({}))
+        }
+      }
+      Factory.prototype.view = function(options) {
+        if (options.type) {
 
-				} else {
-					return new (Backbone.View.extend({}))
-				}
-			}
-			return Factory
-		})();
+        } else {
+          return new (Backbone.View.extend({}))
+        }
+      }
+      return Factory
+    })();
 
-		function setup() {
-			var ViewClass = Backbone.View.extend();
-			var ModelClass = Backbone.DeepModel.extend({defaults: {data: {User: [{img: 'defaultImageSrc'}]}}});
-			var model = new ModelClass();
-			var view = new ViewClass({el: 'form'});
-			var ligament = new Backbone.Ligaments({model: model, view: view, ingest: true});
-			return [model, view];
-		}
+    function setup() {
+      var ViewClass = Backbone.View.extend();
+      var ModelClass = Backbone.NestedModel.extend({defaults: {data: {User: [{img: 'defaultImageSrc'}]}}});
+      var model = new ModelClass();
+      var view = new ViewClass({el: 'form'});
+      var ligament = new Backbone.Ligaments({model: model, view: view, ingest: true});
+      return [model, view];
+    }
 
-		module('Flatten');
+    module('Flatten');
 
-		test('Flatten complex object', function() {
-			var data = new Factory('dataObject');
-			var flat = Backbone.Ligaments.prototype.flatten(data);
+    test('Flatten complex object', function() {
+      var data = new Factory('dataObject');
+      var flat = Backbone.Ligaments.prototype.flatten(data);
 
-			deepEqual(flat, {
-				'data.User.0.name': 'Josh',
-				'data.User.0.group_id': '1',
-				'data.User.0.tall': '1',
-				'data.User.0.img': 'defaultImageSrc',
-				'data.User.0.preference': '3',
-				'data.User.0.tags.0': 'Cool',
-				'data.User.0.tags.1': 'Smart',
-				'name' : 'name'
-			}, 'Flattens a complex object with array and nesting');
-		});
+      deepEqual(flat, {
+        'data.User.0.name': 'Josh',
+        'data.User.0.group_id': '1',
+        'data.User.0.tall': '1',
+        'data.User.0.img': 'defaultImageSrc',
+        'data.User.0.preference': '3',
+        'data.User.0.tags.0': 'Cool',
+        'data.User.0.tags.1': 'Smart',
+        'name' : 'name'
+      }, 'Flattens a complex object with array and nesting');
+    });
 
-		test('Flattens Array', function() {
-			var data = [
-				'one', 
-				'two',
-				'three'
-			];
-			var flat = Backbone.Ligaments.prototype.flatten(data);
-			deepEqual(flat, {'0': 'one', '1': 'two', '2': 'three'}, 'Flattens an array.');
-		});
+    test('Flattens Array', function() {
+      var data = [
+        'one', 
+        'two',
+        'three'
+      ];
+      var flat = Backbone.Ligaments.prototype.flatten(data);
+      deepEqual(flat, {'0': 'one', '1': 'two', '2': 'three'}, 'Flattens an array.');
+    });
 
-		test('Flattens An Array of Objects', function() {
-			var data = [
-				{key: 'value'},
-				{foo: 'bar'},
-				{zig: 'zag'}
-			];
-			var flat = Backbone.Ligaments.prototype.flatten(data);
-			deepEqual(flat, {
-				'0.key': 'value',
-				'1.foo': 'bar',
-				'2.zig': 'zag'
-			}, 'Flattens an array of objects.');
-		});
+    test('Flattens An Array of Objects', function() {
+      var data = [
+        {key: 'value'},
+        {foo: 'bar'},
+        {zig: 'zag'}
+      ];
+      var flat = Backbone.Ligaments.prototype.flatten(data);
+      deepEqual(flat, {
+        '0.key': 'value',
+        '1.foo': 'bar',
+        '2.zig': 'zag'
+      }, 'Flattens an array of objects.');
+    });
 
-		module('parseModel');
-		test('ingest data on construction', function() {
-			var vars = setup();
-			var model = vars[0];
-			var view = vars[1];
+    module('parseModel');
+    test('ingest data on construction', function() {
+      var vars = setup();
+      var model = vars[0];
+      var view = vars[1];
 
-			var data = new Factory('dataObject');
+      var data = new Factory('dataObject');
 
-			deepEqual(model.toJSON(), data, 'ingests data from view on construction if ingest option is set to true');
-		});
+      deepEqual(model.toJSON(), data, 'ingests data from view on construction if ingest option is set to true');
+    });
 
-		module('beforeInject');
-		test('DeepModel beforeInject allows modification of impending injected attributes', function() {
-			var model = new (Backbone.Model.extend({})),
-					view = new (Backbone.View.extend({
-						el: 'form',
-						beforeInject: function(model, attrs) {
-							if (attrs['data.User.0.name']) {
-								attrs['data.User.0.name'] = 'injectedModification';
-							}
-						}
-					})),
-					ligament = new Backbone.Ligaments({model: model, view: view});
+    module('beforeInject');
+    test('DeepModel beforeInject allows modification of impending injected attributes', function() {
+      var model = new (Backbone.Model.extend({})),
+          view = new (Backbone.View.extend({
+            el: 'form',
+            beforeInject: function(model, attrs) {
+              if (attrs['data.User.0.name']) {
+                attrs['data.User.0.name'] = 'injectedModification';
+              }
+            }
+          })),
+          ligament = new Backbone.Ligaments({model: model, view: view});
 
-			model.set('data.User.0.name', 'JoshTest');
+      model.set('data.User.0.name', 'JoshTest');
 
-			model.set('data.User.0.name', 'JoshTest2');
+      model.set('data.User.0.name', 'JoshTest2');
 
-			equal(model.get('data.User.0.name'), 'JoshTest2', 'Model attributes remain unaffected by beforeInject attr modification');
-			equal(ligament.getBound('data.User.0.name').val(), 'injectedModification', 'beforeInject modifies the injection')
+      equal(model.get('data.User.0.name'), 'JoshTest2', 'Model attributes remain unaffected by beforeInject attr modification');
+      equal(ligament.getBound('data.User.0.name').val(), 'injectedModification', 'beforeInject modifies the injection')
 
-		});
+    });
 
-		test('beforeInject allows modification of impending injected attributes without changing the model attributes', function() {
-			var model = new (Backbone.Model.extend())({name: 'Original Model Value'}),
-					view = new (Backbone.View.extend({
-						el: 'form',
-						beforeInject: function(model, attrs) {
-							if (attrs.name) {
-								attrs.name = 'injectedModification of ' + attrs.name;
-							}
-						}
-					})),
-					ligament = new Backbone.Ligaments({
-						model: model,
-						view: view
-					});
+    test('beforeInject allows modification of impending injected attributes without changing the model attributes', function() {
+      var model = new (Backbone.Model.extend())({name: 'Original Model Value'}),
+          view = new (Backbone.View.extend({
+            el: 'form',
+            beforeInject: function(model, attrs) {
+              if (attrs.name) {
+                attrs.name = 'injectedModification of ' + attrs.name;
+              }
+            }
+          })),
+          ligament = new Backbone.Ligaments({
+            model: model,
+            view: view
+          });
 
-			equal($('[lg-bind="name"]').text(), 'injectedModification of Original Model Value', 'Form value has correct beforeInject modified value.');
+      equal($('[lg-bind="name"]').text(), 'injectedModification of Original Model Value', 'Form value has correct beforeInject modified value.');
 
-			equal(model.get('name'), 'Original Model Value', 'Model attributes remain unchanged.');
+      equal(model.get('name'), 'Original Model Value', 'Model attributes remain unchanged.');
 
-		});
+    });
 
-		module("Caster");
+    module("Caster");
 
-		test('casts using [callable, *args] syntax (parseInt)', function() {
-			var model = new Factory('model'),
-					view = new Factory('view'),
-					ligament,
-					$input;
+    test('casts using [callable, *args] syntax (parseInt)', function() {
+      var model = new Factory('model'),
+          view = new Factory('view'),
+          ligament,
+          $input;
 
-			$input = $('<input type="text" lg-bind="castAttr" />').appendTo(view.$el);
+      $input = $('<input type="text" lg-bind="castAttr" />').appendTo(view.$el);
 
-			ligament = new Backbone.Ligaments({
-				view: view, 
-				model: model,
-				bindings: {
-					'castAttr': {
-						cast: [parseInt, 10]
-					}
-				}
-			});
+      ligament = new Backbone.Ligaments({
+        view: view, 
+        model: model,
+        bindings: {
+          'castAttr': {
+            cast: [parseInt, 10]
+          }
+        }
+      });
 
-			$input.val('6').trigger('change');
+      $input.val('6').trigger('change');
 
-			equal(model.get('castAttr'), 6, 'should cast an ingestion using a [function, arg] cast declaration in bindings hash');
+      equal(model.get('castAttr'), 6, 'should cast an ingestion using a [function, arg] cast declaration in bindings hash');
 
-		});
+    });
 
-		test('casts using custom function, providing arg array to callback', function() {
-			var model = new Factory('model'),
-					view = new Factory('view'),
-					ligament,
-					$input;
+    test('casts using custom function, providing arg array to callback', function() {
+      var model = new Factory('model'),
+          view = new Factory('view'),
+          ligament,
+          $input;
 
-			$input = $('<input type="text" lg-bind="castAttr" />').appendTo(view.$el);
+      $input = $('<input type="text" lg-bind="castAttr" />').appendTo(view.$el);
 
-			ligament = new Backbone.Ligaments({
-				view: view, 
-				model: model,
-				bindings: {
-					'castAttr': {
-						cast: [function(val, arg1, arg2) {
-							var val = parseInt(val, 10);
-							return val * arg1 * arg2;
-						}, 2, 3]
-					}
-				}
-			});
+      ligament = new Backbone.Ligaments({
+        view: view, 
+        model: model,
+        bindings: {
+          'castAttr': {
+            cast: [function(val, arg1, arg2) {
+              var val = parseInt(val, 10);
+              return val * arg1 * arg2;
+            }, 2, 3]
+          }
+        }
+      });
 
-			$input.val('6').trigger('change');
+      $input.val('6').trigger('change');
 
-			equal(model.get('castAttr'), 36, 'should cast an ingestion using a [function, arg] cast declaration with custom function in bindings hash');
+      equal(model.get('castAttr'), 36, 'should cast an ingestion using a [function, arg] cast declaration with custom function in bindings hash');
 
-		});
+    });
 
-		module("Ingest/Inject Declarations");
+    module("Ingest/Inject Declarations");
 
-		test('read only (lg-method = inject) attribute', function() {
-			var model = new Factory('model'),
-					view = new Factory('view'),
-					ligament,
-					$input;
+    test('read only (lg-method = inject) attribute', function() {
+      var model = new Factory('model'),
+          view = new Factory('view'),
+          ligament,
+          $input;
 
-			$input = $('<input type="text" lg-bind="castAttr" lg-method="inject"/>').appendTo(view.$el);
+      $input = $('<input type="text" lg-bind="castAttr" lg-method="inject"/>').appendTo(view.$el);
 
-			ligament = new Backbone.Ligaments({
-				view: view, 
-				model: model
-			});
+      ligament = new Backbone.Ligaments({
+        view: view, 
+        model: model
+      });
 
-			$input.val('6').trigger('change');
+      $input.val('6').trigger('change');
 
-			equal(model.get('castAttr'), undefined, 'input changed, but lg-method was inject-only. model should not be changed.');
+      equal(model.get('castAttr'), undefined, 'input changed, but lg-method was inject-only. model should not be changed.');
 
-		});
+    });
 
-		test('write only (lg-method = ingest) attribute', function() {
-			var model = new Factory('model'),
-					view = new Factory('view'),
-					ligament,
-					$input;
+    test('write only (lg-method = ingest) attribute', function() {
+      var model = new Factory('model'),
+          view = new Factory('view'),
+          ligament,
+          $input;
 
-			$input = $('<input type="text" value="original" lg-bind="writeonly" lg-method="ingest"/>').appendTo(view.$el);
+      $input = $('<input type="text" value="original" lg-bind="writeonly" lg-method="ingest"/>').appendTo(view.$el);
 
-			ligament = new Backbone.Ligaments({
-				view: view, 
-				model: model
-			});
+      ligament = new Backbone.Ligaments({
+        view: view, 
+        model: model
+      });
 
-			model.set('writeonly', 'changed');
+      model.set('writeonly', 'changed');
 
-			equal($input.val(), 'original', 'model changed, but lg-method was ingest-only. bound element value should not be changed.');
+      equal($input.val(), 'original', 'model changed, but lg-method was ingest-only. bound element value should not be changed.');
 
-			$input.val('thenChanged').trigger('change');
+      $input.val('thenChanged').trigger('change');
 
-			equal(model.get('writeonly'), 'thenChanged', 'Model attribute is updated with lg-method ingest input is changed.')
+      equal(model.get('writeonly'), 'thenChanged', 'Model attribute is updated with lg-method ingest input is changed.')
 
-		});
-	</script>
+    });
+
+    module('dotToBracketNotation');
+
+    test('converting keys to paths', function() {
+      var model = new Factory('model'),
+          view = new Factory('view'),
+          data = {
+            _id: "5392603c71dd78c65f212913",
+            filename: "5.wav",
+            contentType: "binary/octet-stream",
+            length: 2234640,
+            chunkSize: 262144,
+            uploadDate: "2014-06-07T00:43:40.200Z",
+            md5: "17cfa2c5bc3f656b8cff246a8f92fdb7"
+          },
+          ligament;
+
+      ligament = new Backbone.Ligament({view: view, model: model});
+
+      ok(model.set(data), 'Doesnt\'t throw exception');
+
+    });
+
+    test('simple name paths to dot notation and reverse', function() {
+      var name = 'data[User][0][Profile][title]',
+          dotPath = Backbone.Ligaments.prototype.dotToBracketNotation(name, true),
+          backToName = Backbone.Ligaments.prototype.dotToBracketNotation(dotPath);
+
+      equal(dotPath, 'data.User.0.Profile.title', 'Should convert reverse');
+      equal(backToName, 'data[User][0][Profile][title]', 'Should convert');
+    });
+
+    test('complex name paths to dot notation and reverse', function() {
+      var name = 'data[User][][tag][][name]',
+          dotPath = Backbone.Ligaments.prototype.dotToBracketNotation(name, true),
+          backToName = Backbone.Ligaments.prototype.dotToBracketNotation(dotPath.replace(/\.\./g, '.0.'));
+
+      equal(dotPath, 'data.User..tag..name', 'Should convert reverse');
+      equal(backToName, 'data[User][0][tag][0][name]', 'Should convert');
+    });
+
+
+  </script>
 </body>
 </html>

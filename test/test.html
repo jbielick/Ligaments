@@ -8,9 +8,45 @@
 		fieldset {margin:20px 0;padding:20px;}
 		pre {margin:20px;padding:20px;background-color:#eee;}
 	</style>
-	<script type="text/javascript" src="../lib/backbone.js"></script>
+	<script type="text/javascript" src="../lib/jquery.js"></script>
 	<script type="text/javascript" src="../lib/underscore.js"></script>
-	<script type="text/javascript" src="../lib/.js"></script>
+	<script type="text/javascript" src="../lib/backbone.js"></script>
+	<script type="text/javascript" src="../lib/backbone-nested.js"></script>
+	<script type="text/javascript" src="../src/ligaments.js"></script>
+	<script>
+
+		$(document).ready(function() {
+
+				var ReadOnlyViewClass = Backbone.View.extend({
+					beforeInject: function(model, changed) {;
+						if (_.has(changed, 'data.User.0.name')) {
+							 changed['data.User.0.name'] = changed['data.User.0.name'].toUpperCase();
+						}
+						if (_.has(changed, 'data.User.1.name')) {
+							changed['data.User.1.name'] = changed['data.User.1.name'].split('').reverse().join('');
+						}
+					}
+				});
+
+				var ViewClass = Backbone.View.extend();
+
+				var ModelClass = Backbone.NestedModel.extend();
+
+				model = new ModelClass();
+
+				model.on('change', function(model) {
+					$('#dump').html(JSON.stringify(model.toJSON(), null, 2));
+				});
+
+				model.set({data: {User: [{name: 'Larry Bird'}]}});
+
+				var inputView = new ViewClass({el: 'form'});
+
+				new Backbone.Ligaments({model: model, view: inputView});
+
+			});
+
+	</script>
 </head>
 <body>
 	<div class="container">
@@ -154,7 +190,7 @@
 			</fieldset>
 		</form>
 		<h1>Model Attributes</h1>
-		<pre id="attr">
+		<pre id="dump">
 
 		</pre>
 	</div>
