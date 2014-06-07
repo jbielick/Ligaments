@@ -89,7 +89,7 @@
       @view.beforeInject model, data if _.isFunction @view.beforeInject
 
       for own path, value of data
-        unless path && (@blacklist? and not path in @blacklist) or (@whitelist? and path in @whitelist)
+        unless !path or (@blacklist? and not path in @blacklist) or (@whitelist? and path in @whitelist)
           $bound = @getBound path
           if $bound.length
             return null if $bound.attr('lg-method') == 'ingest'
