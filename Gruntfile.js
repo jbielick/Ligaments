@@ -47,4 +47,6 @@ module.exports = function(grunt) {
 
 	grunt.registerTask('build', ['coffee:compile', 'uglify:main', 'copy:dist']);
 
+	grunt.registerTask('default', ['build', 'watch']);
+
 }
