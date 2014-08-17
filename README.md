@@ -33,8 +33,8 @@ When a change event occurs, the ingested data structure will look like this:
 ```
 
 ```html
-<input type="text" name="photo[categories][0][name] value="r/awesome">
-<input type="text" name="photo[categories][1][name] value="r/mildlyinteresting">
+<input type="text" name="photo[categories][0][name]" value="r/awesome">
+<input type="text" name="photo[categories][1][name]" value="r/mildlyinteresting">
 or 	
 <input type="text" lg-bind="photo.categories.0.name" value="r/awesome">
 <input type="text" lg-bind="photo.categories.1.name" value="r/mildlyinteresting">
@@ -93,7 +93,10 @@ To create data binding between a view and a model, construct a new Ligaments ins
 ```js
 	var viewInstance   = new MyViewClass(),
 	    modelInstance  = new MyModelClass(),
-	    ligament       = new Backbone.Ligaments({model: modelInstance, view: viewInstance});
+	    ligament       = new Backbone.Ligaments({
+	    		       model: modelInstance, 
+	    		       view: viewInstance
+	    		     });
 ```
 
 All input changes in the view will then be ingested by the model and set to its attributes. 
