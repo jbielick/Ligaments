@@ -3,8 +3,6 @@ Backbone Ligaments
 
 Declarative data binding between Backbone Models and Views.
 
-Currently in beta.
-
 ###About
 
 Backbone.Ligaments binds DOM Elements to Model Attributes on the `name` attributes or `lg-bind` attribute declaration of elements within the view. 
