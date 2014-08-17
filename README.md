@@ -92,8 +92,8 @@ To create data binding between a view and a model, construct a new Ligaments ins
 	var viewInstance   = new MyViewClass(),
 	    modelInstance  = new MyModelClass(),
 	    ligament       = new Backbone.Ligaments({
-	    		       model: modelInstance, 
-	    		       view: viewInstance
+	    			model: modelInstance, 
+	    			view: viewInstance
 	    		     });
 ```
 
@@ -101,7 +101,7 @@ All input changes in the view will then be ingested by the model and set to its 
 Similarly the ligament will inject any attributes set on the model programmatically into into the view's bound elements.
 
 ##Features
-====================
+
 
 ###beforeInject callback
 
